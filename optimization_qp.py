@@ -13,7 +13,7 @@ class OptimizationQP:
         # Simula a otimização terciária
         print("Otimização terciária da classe OptimizationQP...")
         return [[1, 2], [3, 4], [5, 6]]
-
+ 
     def connected_secondary_optimization(self, data):
         # Simula a otimização secundária
         print("Otimização secundária da classe OptimizationQP...")
