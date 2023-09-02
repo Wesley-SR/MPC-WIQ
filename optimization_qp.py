@@ -1,4 +1,35 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Aug 19 18:23:10 2023
+
+@author: Wesley
+"""
+
+import cvxpy as cp
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import time
+
 class OptimizationQP:
+    
+    def __init__(self, constants):
+        # Parâmetros da microrrede
+        self.ts = constants.loc[0, 'ts']
+        self.Np = constants.loc[0, 'Np']
+        self.time_steps = list(range(Np))
+
+        self.q_bat = constants.loc[0, 'q_bat']
+        self.p_bat_max = constants.loc[0, 'p_bat_max']
+        self.soc_bat_max = constants.loc[0, 'soc_bat_max']
+        self.soc_bat_min = constants.loc[0, 'soc_bat_min']
+        self.soc_bat_ini = constants.loc[0, 'soc_bat_ini']
+        
+        # Variáveis de otimização
+        p_bat = cp.Variable(Np)
+        soc_bat = cp.Variable(Np)
+        p_grid = cp.Variable(Np)
+    
     def islanded_tertiary_optimization(self, data):
         # Simula a otimização terciária
         print("Otimização terciária da classe OptimizationQP...")
