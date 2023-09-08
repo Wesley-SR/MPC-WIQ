@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import time
 
-class OptimizationQP:
+class QPOptimization:
     
     def __init__(self, constants):
         # Parâmetros da microrrede
@@ -26,9 +26,9 @@ class OptimizationQP:
         self.soc_bat_ini = constants.loc[0, 'soc_bat_ini']
         
         # Variáveis de otimização
-        p_bat = cp.Variable(Np)
-        soc_bat = cp.Variable(Np)
-        p_grid = cp.Variable(Np)
+        self.p_bat = cp.Variable(Np)
+        self.soc_bat = cp.Variable(Np)
+        self.p_grid = cp.Variable(Np)
     
     def islanded_tertiary_optimization(self, data):
         # Simula a otimização terciária
