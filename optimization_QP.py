@@ -13,14 +13,16 @@ import time
 
 class OptimizationQP:
 
-    def __init__(self, constants):
+    def __init__(self, constants, Datas):
+        self.Datas = Datas
+        
         # Parâmetros da microrrede
         self.ts_2th = constants.loc[0, 'ts_2th']
         self.ts_3th = constants.loc[0, 'ts_3th']
         self.Np_2th = constants.loc[0, 'Np_2th']
         self.Np_3th = constants.loc[0, 'Np_3th']
 
-        self.time_steps = list(range(Np))
+        self.time_steps = list(range(self.Np_3th))
 
         self.q_bat = constants.loc[0, 'q_bat']
         self.p_bat_max = constants.loc[0, 'p_bat_max']
@@ -28,9 +30,10 @@ class OptimizationQP:
         self.soc_bat_min = constants.loc[0, 'soc_bat_min']
         
         # Variáveis de otimização
-        self.p_bat = cp.Variable(Np)
-        self.soc_bat = cp.Variable(Np)
-        self.p_grid = cp.Variable(Np)
+        self.p_bat = cp.Variable(self.Np_3th)
+        self.soc_bat = cp.Variable(self.Np_3th)
+        self.p_grid = cp.Variable(self.Np_3th)
+        self.soc_bat = cp.Variable(self.Np_3th)
 
 
 
@@ -69,12 +72,12 @@ class OptimizationQP:
 
             # SOC da bateria
             if t == 0:
-                constraints.append(soc_bat[t] == soc_bat_current)
+                constraints.append(self.Np_3th[t] == soc_bat_current)
             else:
-                constraints.append(soc_bat[t] == soc_bat[t-1] - p_bat[t]*self.ts_3th/self.q_bat)
+                constraints.append(self.Np_3th[t] == self.Np_3th[t-1] - self.p_bat[t]*self.ts_3th/self.q_bat)
             
-            constraints.append(soc_bat[t] <= self.soc_bat_max)
-            constraints.append(soc_bat[t] >= self.soc_bat_min)
+            constraints.append(self.Np_3th[t] <= self.soc_bat_max)
+            constraints.append(self.Np_3th[t] >= self.soc_bat_min)
 
         problem = cp.Problem(objective, constraints)
         problem.solve()
