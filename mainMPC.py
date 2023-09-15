@@ -9,11 +9,14 @@ import pandas as pd
 from optimization_QP import OptimizationQP
 
 class Datas():
-    def __init__(self):
+    def __init__(self, constants):
         self.soc_bat = 0
         self.soc_sc = 0
         self.p_pv = 0
         self.p_load = 0
+        self.pv_forecast = pd.DataFrame
+        # TODO: Fazer a matriz M com 2 dias, sendo um passado e um furuto. Será atualizada a cada iteração do 3th
+        # time, operation_mode, pv_mea, pv_forecast, soc_bat_fore, soc_bat_real, soc_bat_fore, soc_bat_real, p_grid
         
 
 class mainClass():
