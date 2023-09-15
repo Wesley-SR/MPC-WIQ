@@ -26,6 +26,7 @@ class Edita2:
 class ClasseExterna:
     def __init__(self):
         self.dados = Dados()
+        # Aqui está a cereja do bolo. Passa com o "self" o argumento para as outras classes
         self.edita1 = Edita1(self.dados)  # Passando o objeto Dados para Edita1
         self.edita2 = Edita2(self.dados)  # Passando o objeto Dados para Edita2
 
