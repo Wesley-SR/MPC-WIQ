@@ -1,34 +1,61 @@
-class Dados:
-    def __init__(self):
-        self.valor = 0  # Variável que deseja ser editada
-
-class Edita1:
-    def __init__(self, dados):
-        self.dados = dados  # Passando o objeto Dados como argumento
-
-    def editar_valor(self, novo_valor):
-        self.dados.valor = novo_valor
-
-    def imprimir_valor(self):
-        print(f"Valor atual: {self.dados.valor}")
+import pandas as pd
+from Datas import Datas
 
 
-class Edita2:
-    def __init__(self, dados):
-        self.dados = dados  # Passando o objeto Dados como argumento
 
-    def imprimir_valor(self):
-        print(f"Valor atual: {self.dados.valor}")
 
-    def editar_valor(self, novo_valor):
-        self.dados.valor = novo_valor
 
 class ClasseExterna:
     def __init__(self):
-        self.dados = Dados()
+        self.Dados = Datas()
+        
         # Aqui está a cereja do bolo. Passa com o "self" o argumento para as outras classes
-        self.edita1 = Edita1(self.dados)  # Passando o objeto Dados para Edita1
-        self.edita2 = Edita2(self.dados)  # Passando o objeto Dados para Edita2
+        self.edita1 = Edita1(self.Dados)  # Passando o objeto Dados para Edita1
+        self.edita2 = Edita2(self.Dados)  # Passando o objeto Dados para Edita2
+        
+        self.edita1 = Edita1(self.Dados)  # Passando o objeto Dados para Edita1
+        self.edita2 = Edita2(self.Dados)  # Passando o objeto Dados para Edita2
+
+
+
+
+
+class Edita1:
+    def __init__(self, Dados):
+        self.Dados = Dados  # Passando o objeto Dados como argumento
+
+    def editar_valor(self, novo_valor):
+        self.Dados.valor = novo_valor
+        self.Dados.I_3th.loc[3,'pv_forecast'] = 133.58
+
+    def imprimir_valor(self):
+        print(f"Valor atual: {self.Dados.valor}")
+        print(self.Dados.I_3th['pv_forecast'])
+
+
+
+
+
+class Edita2:
+    def __init__(self, Dados):
+        self.Dados = Dados  # Passando o objeto Dados como argumento
+
+    def imprimir_valor(self):
+        print(f"Valor atual: {self.Dados.valor}")
+ 
+        print(self.Dados.I_3th['pv_forecast'])
+
+    def editar_valor(self, novo_valor):
+        self.Dados.valor = novo_valor
+        self.Dados.I_3th.loc[15,'pv_forecast'] = 958.45
+
+
+
+
+
+
+
+
 
 # Criando uma instância da ClasseExterna
 classe_externa = ClasseExterna()
@@ -44,3 +71,8 @@ classe_externa.edita2.editar_valor(100)
 
 # Edita1 imprime o valor atualizado pelo Edita2
 classe_externa.edita1.imprimir_valor()
+
+print(classe_externa.Dados.M)
+
+classe_externa.Dados.M.loc[16,'pv_forecast'] = 785.33
+print(classe_externa.Dados.M[16,'pv_forecast'])

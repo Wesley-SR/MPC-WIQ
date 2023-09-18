@@ -13,23 +13,16 @@ import time
 
 class OptimizationQP:
 
-    def __init__(self, constants, Datas):
+    def __init__(self, Datas):
         self.Datas = Datas
         
-        # Parâmetros da microrrede
-        self.ts_2th = constants.loc[0, 'ts_2th']
-        self.ts_3th = constants.loc[0, 'ts_3th']
-        self.Np_2th = constants.loc[0, 'Np_2th']
-        self.Np_3th = constants.loc[0, 'Np_3th']
-
-        self.time_steps = list(range(self.Np_3th))
-
-        self.q_bat = constants.loc[0, 'q_bat']
-        self.p_bat_max = constants.loc[0, 'p_bat_max']
-        self.soc_bat_max = constants.loc[0, 'soc_bat_max']
-        self.soc_bat_min = constants.loc[0, 'soc_bat_min']
+        # Weightings for objective function
+        self.K_PV_REF = 0.05
+        self.WEIGHTING_DELTA_BAT = 0.45
+        self.WEIGHTING_REF_BAT = 0.45
+        self.WEIGHTING_REF_SC =0.45
         
-        # Variáveis de otimização
+        # Optimization variables
         self.p_bat = cp.Variable(self.Np_3th)
         self.soc_bat = cp.Variable(self.Np_3th)
         self.p_grid = cp.Variable(self.Np_3th)
@@ -39,7 +32,7 @@ class OptimizationQP:
 
 
 
-    def islanded_tertiary_optimization(self, data):
+    def islanded_optimization_3th(self):
         # Simula a otimização terciária
         print("Otimização terciária da classe OptimizationQP...")
         return [[1, 2], [3, 4], [5, 6]]
@@ -49,7 +42,7 @@ class OptimizationQP:
 
 
 
-    def islanded_secondary_optimization(self, data):
+    def islanded_optimization_2th(self):
         # Simula a otimização secundária
         print("Otimização secundária da classe OptimizationQP...")
         return [[10, 20], [30, 40], [50, 60]]
@@ -59,7 +52,7 @@ class OptimizationQP:
 
 
 
-    def connected_tertiary_optimization(self, soc_bat_current, p_pv, p_load):
+    def connected_optimization_3th(self):
         
         # Problema de otimização
         objective = cp.Minimize(cp.sum_squares(self.p_grid) + cp.sum_squares(self.p_bat))
@@ -68,7 +61,7 @@ class OptimizationQP:
         for t in time_steps:
 
             # Balanço de potência
-            constraints.append(p_pv[t] + self.p_bat[t] + self.p_grid[t] + p_load[t] == 0)
+            constraints.append(self.Datas.I_3th[t, 'pv_forecast'] + self.p_bat[t] + self.p_grid[t] + self.Datas.I_3th[t, 'load_forecast'] == 0)
 
             # SOC da bateria
             if t == 0:
@@ -88,7 +81,7 @@ class OptimizationQP:
  
  
  
-    def connected_secondary_optimization(self, data):
+    def connected_optimization_2th(self):
         # Simula a otimização secundária
         print("Otimização secundária da classe OptimizationQP...")
         return [[10, 20], [30, 40], [50, 60]]

@@ -6,34 +6,16 @@ Created on Sat Aug 22 21:39:00 2023
 
 import time
 import pandas as pd
-from optimization_QP import OptimizationQP
+from OptimizationQP import OptimizationQP
+from Datas import Datas
 
-class Datas():
-    def __init__(self, constants):
-        self.soc_bat = 0
-        self.soc_sc = 0
-        self.p_pv = 0
-        self.p_load = 0
-        self.pv_forecast = pd.DataFrame
-        # TODO: Fazer a matriz M com 2 dias, sendo um passado e um furuto. Será atualizada a cada iteração do 3th
-        # time, operation_mode, pv_mea, pv_forecast, soc_bat_fore, soc_bat_real, soc_bat_fore, soc_bat_real, p_grid
-        
-
+ 
 class mainClass():
-    def __init__(self, constants):
-        super().__init__(constants)
+    def __init__(self):
+
+        self.Datas = Datas()
+        
         self.stop_mpc = False
-        self.time_sleep = constants.loc[0, 'time_sleep']
-        
-        # Time Step = ts
-        self.ts_measurement = constants.loc[0, 'ts_measurement']
-        self.ts_forecast = constants.loc[0, 'ts_forecast']
-        self.ts_2th = constants.loc[0, 'ts_2th']
-        self.ts_3th = constants.loc[0, 'ts_3th']
-        
-        self.Np_2th = constants.loc[0, 'Np_2th']
-        self.Np_3th = constants.loc[0, 'Np_3th']
-        
         # Last Time
         self.last_time_measurement = 0
         self.last_time_forecast = 0
@@ -46,9 +28,8 @@ class mainClass():
         # 2 -> MILP. Connected mode.
         # 3 -> MILP. Islanded mode.
         
-        self.pv_forecast_2th = pd.DataFrame([0]* self.Np_2th)
-        self.pv_forecast_3th = pd.DataFrame([0]* self.Np_3th)
         self.qp_otimization = OptimizationQP(constants)
+
 
 
 
@@ -141,7 +122,7 @@ class mainClass():
 
 
     def run_terciary():
-        pass
+        self.qp_otimization.connected_optimization_3th()
 
 
 
