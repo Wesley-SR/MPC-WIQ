@@ -72,7 +72,9 @@ classe_externa.edita2.editar_valor(100)
 # Edita1 imprime o valor atualizado pelo Edita2
 classe_externa.edita1.imprimir_valor()
 
-print(classe_externa.Dados.M)
+print(classe_externa.Dados.I_3th['pv_forecast'])
 
-classe_externa.Dados.M.loc[16,'pv_forecast'] = 785.33
-print(classe_externa.Dados.M[16,'pv_forecast'])
+classe_externa.Dados.I_3th.loc[16,'pv_forecast'] = 785.33
+print(classe_externa.Dados.I_3th.loc[16,'pv_forecast'])
+
+print(classe_externa.Dados.I_3th['pv_forecast'])
