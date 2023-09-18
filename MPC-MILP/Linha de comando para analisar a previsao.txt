@@ -1,0 +1,17 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+
+MPC_time = 45
+
+fig, ax = plt.subplots()
+
+# Plotagem dos dataframes
+ax.plot(F_PV_after['P_{}'.format(MPC_time)], label='Dataframe 1')
+ax.plot(F_PV_after['F_PV_{}'.format(MPC_time)], label='Dataframe 2')
+
+# Configuração do gráfico
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_title('Dois dataframes em um mesmo gráfico')
+ax.legend()
