@@ -12,10 +12,11 @@ import pandas as pd
 import time
 
 
-
+R = pd.DataFrame({'p_bat_ref': [0]*24})
+R2 = pd.DataFrame({'p_bat_ref': [0]*24})
 
 constants = pd.DataFrame({'Np': [24],
-                          'ts': [0.083],
+                          'ts': [1],
                           'q_bat': [12], # kWh
                           'soc_bat_max': [0.95],
                           'soc_bat_min': [0.2],
@@ -41,7 +42,6 @@ soc_bat_max = constants.loc[0, 'soc_bat_max']
 soc_bat_min = constants.loc[0, 'soc_bat_min']
 soc_bat_ini = constants.loc[0, 'soc_bat_ini']
 
-p_grid_max = 150  # Capacidade da rede da concessionária em kWh
 
 p_load = np.array([-80, -85, -90, -85, -80, -75, -70, -70, -75, -80, -85, -90, -95, -100, -110, -120, -130, -140, -135, -130, -125, -120, -110, -100])  # Exemplo de demanda em kWh
 p_pv = np.array([0, 0, 0, 0, 0, 0, 3, 12, 25, 35, 40, 45, 50, 60, 50, 40, 10, 7, 0, 0, 0, 0, 0, 0])  # Exemplo de geração do PV em kWh
@@ -57,6 +57,10 @@ constraints = []
 
 start_time = time.time()
 
+R_problem_3th = pd.DataFrame({'FO': [0]*24,
+                           'P1': [0.0]*24,
+                           'P2': [0.0]*24})
+
 for t in time_steps:
 
     # Balanço de potência
@@ -68,16 +72,29 @@ for t in time_steps:
     else:
         constraints.append(soc_bat[t] == soc_bat[t-1] - p_bat[t]*ts/q_bat)
     
-    constraints.append(soc_bat[t] <= soc_bat_max)
-    constraints.append(soc_bat[t] >= soc_bat_min)
-
+    
+    # Technical constrains
+    constraints.append(p_grid[t] <= 150)
+    constraints.append(p_grid[t] >= -150)
+    constraints.append(soc_bat[t] >= 0.2)
+    constraints.append(soc_bat[t] <= 0.9)
+    constraints.append(p_bat[t] >= -80)
+    constraints.append(p_bat[t] <= 80)
+    
+    
 problem = cp.Problem(objective, constraints)
-problem.solve()
+problem.solve(solver=cp.ECOS)
 
 end_time = time.time()
 # Calcula o tempo de execução
 execution_time = end_time - start_time
 
+
+R.loc[:, 'p_bat_ref'] = p_bat.value[:]
+print(R['p_bat_ref'])
+
+R.loc[:, 'soc_bat'] = soc_bat.value[:]
+print(R['soc_bat'])
 
 # Exibindo resultados
 for t in time_steps:
@@ -100,10 +117,17 @@ grid_power = np.array([p_grid.value[t] for t in time_steps])
 soc_battery = np.array([soc_bat.value[t] for t in time_steps])
 
 
+        # Optimization Result
+for i in range(0, 24):
+    R_problem_3th.loc[i, 'p_bat_ref'] = p_bat.value[i]
+    R_problem_3th.loc[i, 'p_grid_ref'] = p_grid.value[i]
+    R_problem_3th.loc[i, 'soc_bat_ref'] = soc_bat.value[i]
+    
+
 plt.figure(figsize=(10, 5))
-plt.plot(time_steps, battery_power, marker='o', linestyle='-', color='b', label='Bateria')
+plt.plot(time_steps, R_problem_3th.loc[:, 'p_bat_ref'], marker='o', linestyle='-', color='b', label='Bateria')
 plt.plot(time_steps, p_pv, marker='o', linestyle='-', color='orange', label='PV')
-plt.plot(time_steps, grid_power, marker='o', linestyle='-', color='r', label='Rede')
+plt.plot(time_steps, R_problem_3th.loc[:, 'p_grid_ref'], marker='o', linestyle='-', color='r', label='Rede')
 plt.plot(time_steps, p_load, marker='o', linestyle='-', color='g', label='Carga')
 plt.axhline(0, color='black', linestyle='--')
 plt.xlabel('Hora')

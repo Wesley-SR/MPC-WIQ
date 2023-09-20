@@ -9,6 +9,9 @@ class ClasseExterna:
     def __init__(self):
         self.Dados = Datas()
         
+        print(self.Dados.I_3th['pv_forecast'])
+        print(self.Dados.I_3th.loc[0, 'pv_forecast'])
+        
         # Aqui está a cereja do bolo. Passa com o "self" o argumento para as outras classes
         self.edita1 = Edita1(self.Dados)  # Passando o objeto Dados para Edita1
         self.edita2 = Edita2(self.Dados)  # Passando o objeto Dados para Edita2
@@ -48,6 +51,7 @@ class Edita2:
     def editar_valor(self, novo_valor):
         self.Dados.valor = novo_valor
         self.Dados.I_3th.loc[15,'pv_forecast'] = 958.45
+        self.Dados.I_3th.loc[15,'pv_forecast'] = self.Dados.p_pv
 
 
 

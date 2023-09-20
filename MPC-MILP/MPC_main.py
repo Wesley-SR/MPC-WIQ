@@ -216,7 +216,7 @@ for k in range(0, qtd_ciclos_para_rodar_MPC): # k=0 é o instante inicial, equiv
     
     I[0] = medições
     Coloca na primeira linha da matriz I as medições reais do instante atual
-    Obs.: Por mais que a na nomenclatura da matriz I contenha a palavra "previsão",
+    Obs.: Por mais que na nomenclatura da matriz I contenha a palavra "previsão",
     a primeira linha tem dados reais medidos
     ======================================================================= """ 
 

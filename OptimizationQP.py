@@ -14,28 +14,111 @@ import time
 class OptimizationQP:
 
     def __init__(self, Datas):
-        self.Datas = Datas
         
+        self.Datas = Datas
+       
         # Weightings for objective function
         self.K_PV_REF = 0.05
         self.WEIGHTING_DELTA_BAT = 0.45
         self.WEIGHTING_REF_BAT = 0.45
         self.WEIGHTING_REF_SC =0.45
         
-        # Optimization variables
-        self.p_bat = cp.Variable(self.Np_3th)
-        self.soc_bat = cp.Variable(self.Np_3th)
-        self.p_grid = cp.Variable(self.Np_3th)
-        self.soc_bat = cp.Variable(self.Np_3th)
-
-
 
 
 
     def islanded_optimization_3th(self):
-        # Simula a otimização terciária
-        print("Otimização terciária da classe OptimizationQP...")
-        return [[1, 2], [3, 4], [5, 6]]
+        
+        print("Islanded Optimization in 3th")
+        
+        # Optimization variables
+        p_bat = cp.Variable(self.Datas.NP_3TH)
+        soc_bat = cp.Variable(self.Datas.NP_3TH)
+        
+        # Optimization problem
+        objective = cp.Minimize(cp.sum_squares(p_bat))
+        constraints = []
+        
+
+        # MPC LOOP
+        for t in range(0,self.Datas.NP_3TH):
+
+            # Power balance
+            constraints.append(self.Datas.I_3th.loc[t, 'pv_forecast'] + p_bat[t] + self.Datas.I_3th.loc[t, 'load_forecast'] == 0)
+
+            # Battery SOC
+            if t == 0:
+                constraints.append(soc_bat[t] == self.Datas.soc_bat)
+            else:
+                constraints.append(soc_bat[t] == soc_bat[t-1] - p_bat[t-1]*self.Datas.TS_3TH/self.Datas.Q_BAT)
+
+            # Technical constrains
+            constraints.append(soc_bat[t] >= self.Datas.SOC_BAT_MIN)
+            constraints.append(soc_bat[t] <= self.Datas.SOC_BAT_MAX)
+            constraints.append(p_bat[t] >= self.Datas.P_BAT_MIN)
+            constraints.append(p_bat[t] <= self.Datas.P_BAT_MAX)
+
+      
+
+        problem = cp.Problem(objective, constraints)
+        problem.solve(solver=cp.ECOS)
+        
+        # Optimization Result
+        for i in range(0, self.Datas.NP_3TH):
+            self.Datas.R_3th.loc[i, 'p_bat_ref'] = p_bat.value[i]
+            self.Datas.R_3th.loc[i, 'p_grid_ref'] = 0
+            self.Datas.R_3th.loc[i, 'soc_bat_ref'] = soc_bat.value[i]
+        
+        self.Datas.R_3th.loc[0, 'FO'] = problem.value
+
+
+
+
+
+
+    def connected_optimization_3th(self):
+        
+        # Optimization variables
+        p_bat = cp.Variable(self.Datas.NP_3TH)
+        soc_bat = cp.Variable(self.Datas.NP_3TH)
+        p_grid = cp.Variable(self.Datas.NP_3TH)
+        
+        # Optimization problem
+        objective = cp.Minimize(cp.sum_squares(p_grid) + cp.sum_squares(p_bat))
+        constraints = []
+        
+
+        # MPC LOOP
+        for t in range(0,self.Datas.NP_3TH):
+
+            # Power balance
+            constraints.append(self.Datas.I_3th.loc[t, 'pv_forecast'] + p_bat[t] + p_grid[t] + self.Datas.I_3th.loc[t, 'load_forecast'] == 0)
+
+            # Battery SOC
+            if t == 0:
+                constraints.append(soc_bat[t] == self.Datas.soc_bat)
+            else:
+                constraints.append(soc_bat[t] == soc_bat[t-1] - p_bat[t-1]*self.Datas.TS_3TH/self.Datas.Q_BAT)
+
+            # Technical constrains
+            constraints.append(p_grid[t] >= self.Datas.P_GRID_MIN)
+            constraints.append(p_grid[t] <= self.Datas.P_GRID_MAX)
+            constraints.append(soc_bat[t] >= self.Datas.SOC_BAT_MIN)
+            constraints.append(soc_bat[t] <= self.Datas.SOC_BAT_MAX)
+            constraints.append(p_bat[t] >= self.Datas.P_BAT_MIN)
+            constraints.append(p_bat[t] <= self.Datas.P_BAT_MAX)
+
+      
+
+        problem = cp.Problem(objective, constraints)
+        problem.solve(solver=cp.ECOS)
+        
+        # Optimization Result
+        for i in range(0, self.Datas.NP_3TH):
+            self.Datas.R_3th.loc[i, 'p_bat_ref'] = p_bat.value[i]
+            self.Datas.R_3th.loc[i, 'p_grid_ref'] = p_grid.value[i]
+            self.Datas.R_3th.loc[i, 'soc_bat_ref'] = soc_bat.value[i]
+        
+        self.Datas.R_3th.loc[0, 'FO'] = problem.value
 
 
 
@@ -52,35 +135,6 @@ class OptimizationQP:
 
 
 
-    def connected_optimization_3th(self):
-        
-        # Problema de otimização
-        objective = cp.Minimize(cp.sum_squares(self.p_grid) + cp.sum_squares(self.p_bat))
-        constraints = []
-        
-        for t in time_steps:
-
-            # Balanço de potência
-            constraints.append(self.Datas.I_3th[t, 'pv_forecast'] + self.p_bat[t] + self.p_grid[t] + self.Datas.I_3th[t, 'load_forecast'] == 0)
-
-            # SOC da bateria
-            if t == 0:
-                constraints.append(self.Np_3th[t] == soc_bat_current)
-            else:
-                constraints.append(self.Np_3th[t] == self.Np_3th[t-1] - self.p_bat[t]*self.ts_3th/self.q_bat)
-            
-            constraints.append(self.Np_3th[t] <= self.soc_bat_max)
-            constraints.append(self.Np_3th[t] >= self.soc_bat_min)
-
-        problem = cp.Problem(objective, constraints)
-        problem.solve()
-        return [[1, 2], [3, 4], [5, 6]]
- 
- 
- 
- 
- 
- 
     def connected_optimization_2th(self):
         # Simula a otimização secundária
         print("Otimização secundária da classe OptimizationQP...")
