@@ -32,6 +32,7 @@ class EMS():
         # 3 -> MILP. Islanded mode.
         
         self.qp_otimization = OptimizationQP(self.Datas)
+        
 
 
 
@@ -46,9 +47,7 @@ class EMS():
             # Check if staying in island mode or connected mode
 
             # Take measurements
-            print("1")
             if (self.is_it_time_to_take_measurements()):
-                print("2")
                 self.get_measurements()
 
             # Forecast PV and Load
@@ -65,7 +64,7 @@ class EMS():
             #    self.run_2th_optimization()
 
             # Check if it's time to stop the code
-            self.stop_mpc = True
+            self.stop_mpc = True # Test for now
             if self.stop():
                 break
             
@@ -168,7 +167,7 @@ class EMS():
 
 
     def get_forecast_load(self):
-        p_load = np.array([-80, -85, -90, -85, -80, -75, -70, -70, -75, -80, -85, -90, -95, -100, -110, -120, -130, -140, -135, -130, -125, -120, -110, -100])  # Exemplo de demanda em kWh
+        p_load = np.array([-0, -5, -13, -20, -40, -45, -65, -35, -38, -20, -18, -40, -48, -56, -70, -50, -40, -40, -35, -32, -27, -25, -20, -15])  # Exemplo de demanda em kWh
         self.Datas.I_3th.loc[:, 'load_forecast'] = p_load[:]
         self.Datas.I_3th.loc[0, 'load_forecast'] = float(self.Datas.p_load)
         
@@ -185,23 +184,29 @@ class EMS():
 
     def plot_result(self):
         time_steps = list(range(self.Datas.NP_3TH))
+        
         plt.figure(figsize=(10, 5))
         
         if self.operation_mode == 0:
-            plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_grid_ref'], marker='o', linestyle='-', color='r', label='Rede')
+            print("Plot p_grid")
+            plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_grid_3th'], marker='o', linestyle='-', color='r', label='Grid')
         
-        plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_bat_ref'], marker='o', linestyle='-', color='b', label='Bateria')
+        plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_bat_3th'], marker='o', linestyle='-', color='b', label='Battery')
         plt.plot(time_steps, self.Datas.I_3th.loc[:, 'pv_forecast'], marker='o', linestyle='-', color='orange', label='PV')
-        plt.plot(time_steps, self.Datas.I_3th.loc[:, 'load_forecast'], marker='o', linestyle='-', color='g', label='Carga')
+        plt.plot(time_steps, self.Datas.I_3th.loc[:, 'load_forecast'], marker='o', linestyle='-', color='g', label='Load')
+        plt.plot(time_steps, self.Datas.I_3th.loc[:, 'pv_forecast']*self.Datas.R_3th.loc[:, 'k_pv_3th'], linestyle='-', color='orange', label='Load')
         plt.axhline(0, color='black', linestyle='--')
-        plt.xlabel('Hora')
-        plt.ylabel('Potência (kW)')
-        plt.title('Potências na Microrrede')
+        plt.xlabel('Time (h)')
+        plt.ylabel('Power (kW)')
+        plt.title('Microgrid power')
         plt.legend()
         plt.grid()
 
         plt.figure(figsize=(10, 5))
-        plt.plot(time_steps, self.Datas.R_3th.loc[:, 'soc_bat_ref'], marker='o', linestyle='-', color='b', label='soc_bat')
+        if self.operation_mode == 1:
+            plt.plot(time_steps, self.Datas.R_3th.loc[:, 'k_pv_3th'], marker='o', linestyle='-', color='r', label='k_pv_3th')
+        
+        plt.plot(time_steps, self.Datas.R_3th.loc[:, 'soc_bat_3th'], marker='o', linestyle='-', color='b', label='soc_bat')
         plt.axhline(0, color='black', linestyle='--')
         plt.xlabel('Hora')
         plt.ylabel('SOC (%)')

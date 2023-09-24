@@ -23,11 +23,11 @@ class Datas:
         self.TIME_SLEEP = int(0)
 
         # Technical specification constans
-        self.Q_BAT = int(200)
+        self.Q_BAT = int(1000)
         self.SOC_BAT_MIN = float(0.2)
         self.SOC_BAT_MAX = float(0.95)
-        self.P_BAT_MAX = int(80)
-        self.P_BAT_MIN = int(- 80)
+        self.P_BAT_MAX = int(200)
+        self.P_BAT_MIN = int(- 200)
         self.P_GRID_MAX = int(150)
         self.P_GRID_MIN = int(- 150)
         
@@ -53,10 +53,11 @@ class Datas:
                                    'load_forecast': [0.0]*self.NP_3TH})
         
         
-        self.R_3th = pd.DataFrame({'p_bat_ref': [0.0]*self.NP_3TH,
-                                   'p_grid_ref': [0.0]*self.NP_3TH,
-                                   'soc_bat_ref': [0.0]*self.NP_3TH,
-                                   'FO': [0.0]*self.NP_3TH,})
+        self.R_3th = pd.DataFrame({'p_bat_3th': [0.0]*self.NP_3TH,
+                                   'p_grid_3th': [0.0]*self.NP_3TH,
+                                   'soc_bat_3th': [0.0]*self.NP_3TH,
+                                   'k_pv_3th': [0.0]*self.NP_3TH,
+                                   'FO': [0.0]*self.NP_3TH})
         
         
         self.C_3th = pd.DataFrame({'pv_forecast': [0.0]*self.NP_3TH})
