@@ -14,7 +14,7 @@ class Datas:
 
         
         # Time constants
-        self.NP_2TH = int(15)
+        self.NP_2TH = 15
         self.NP_3TH = int(24)
         self.TS_2TH = int(1)
         self.TS_3TH = int(1)
@@ -23,8 +23,12 @@ class Datas:
         self.TIME_SLEEP = int(0)
 
         # Technical specification constans
-        self.Q_BAT = int(1000)
-        self.SOC_BAT_MIN = float(0.2)
+        self.Q_BAT = int(12000)
+        self.COST_BAT = 50000
+        self.CC_BAT = self.COST_BAT/self.Q_BAT
+        self.N_BAT = 6000
+        self.COST_DEGR_BAT = 5*10^(-9)
+        self.SOC_BAT_MIN = 0.2
         self.SOC_BAT_MAX = float(0.95)
         self.P_BAT_MAX = int(200)
         self.P_BAT_MIN = int(- 200)
@@ -38,14 +42,14 @@ class Datas:
         self.p_load = float(-80)
 
         self.I_3th = pd.DataFrame({'pv_forecast': [0.0]*self.NP_3TH,
-                                   'energy_tariff_purchase': [0.0]*self.NP_3TH,
-                                   'energy_tariff_sales': [0.0]*self.NP_3TH,
+                                   'tariff_pur': [0.5]*self.NP_3TH,
+                                   'tariff_sale': [0.5]*self.NP_3TH,
                                    'load_forecast': [0.0]*self.NP_3TH,
                                    })
         
         self.M_3th = pd.DataFrame({'pv': [0.0]*self.NP_3TH,
-                                   'energy_tariff_purchase': [0.0]*self.NP_3TH,
-                                   'energy_tariff_sales': [0.0]*self.NP_3TH,
+                                   'tariff_pur': [0.5]*self.NP_3TH,
+                                   'tariff_sale': [0.5]*self.NP_3TH,
                                    'load': [0.0]*self.NP_3TH,
                                    })
         
@@ -63,9 +67,9 @@ class Datas:
         self.C_3th = pd.DataFrame({'pv_forecast': [0.0]*self.NP_3TH})
         
         self.I_2th = pd.DataFrame({'pv_forecast': [0.0]*self.NP_2TH,
-                                   'energy_tariff_purchase': [0.0]*self.NP_2TH,
-                                   'energy_tariff_sales': [0.0]*self.NP_2TH,
+                                   'tariff_pur': [0.5]*self.NP_2TH,
+                                   'tariff_sale': [0.5]*self.NP_2TH,
                                    'load_forecast': [0.0]*self.NP_2TH,
                                    })
-        
+
 

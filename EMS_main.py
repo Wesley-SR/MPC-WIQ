@@ -25,7 +25,7 @@ class EMS():
         self.last_time_2th = 0
         self.last_time_3th = 0
         
-        self.operation_mode = 1
+        self.operation_mode = 0
         # 0 -> QP.   Connected mode.
         # 1 -> QP.   Islanded mode.
         # 2 -> MILP. Connected mode.
@@ -57,7 +57,9 @@ class EMS():
 
             # Run terciary optmization
             if (self.is_it_time_to_run_the_terciary()):
+                before_opt_3th = time.time()
                 self.run_3th_optimization()
+                print("Time to 3th optmization: {}".format(time.time() - before_opt_3th))
 
             # Run 2th optmization
             # if (self.is_it_time_to_run_the_2th()):
@@ -77,10 +79,6 @@ class EMS():
 
     def is_it_time_to_take_measurements(self):
         current_time = time.time()
-        print("Check if is time to measurement")
-        print("current_time = {}".format(current_time))
-        print("last_time_measurement = {}".format(self.last_time_measurement))
-        print("TS_MEASUREMENT = {}".format(self.Datas.TS_MEASUREMENT))
         
         if (current_time - self.last_time_measurement >= self.Datas.TS_MEASUREMENT):
             print("It's time to measurement")
