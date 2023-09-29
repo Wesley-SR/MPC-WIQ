@@ -14,9 +14,9 @@ class Datas:
 
         
         # Time constants
-        self.NP_2TH = 15
-        self.NP_3TH = int(24)
-        self.TS_2TH = int(1)
+        self.NP_2TH = 15 # sec
+        self.NP_3TH = 24
+        self.TS_2TH = 1
         self.TS_3TH = int(1)
         self.TS_MEASUREMENT = int(1)
         self.TS_FORECAST = int(1)

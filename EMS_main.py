@@ -31,7 +31,8 @@ class EMS():
         # 2 -> MILP. Connected mode.
         # 3 -> MILP. Islanded mode.
         
-        self.qp_otimization = OptimizationQP(self.Datas)
+        self.qp_optimization = OptimizationQP(self.Datas)
+        # self.milp_optimization = OptimizationMILP(self.Datas)
         
 
 
@@ -132,7 +133,7 @@ class EMS():
 
     def run_2th_optimization():
         pass
-        # self.qp_otimization.connected_tertiary_optimization(self.operation_mode, soc_bat_current, p_pv, p_load)
+        # self.qp_optimization.connected_tertiary_optimization(self.operation_mode, soc_bat_current, p_pv, p_load)
 
 
 
@@ -140,9 +141,9 @@ class EMS():
 
     def run_3th_optimization(self):
         if self.operation_mode == 0:
-            self.qp_otimization.connected_optimization_3th()
+            self.qp_optimization.connected_optimization_3th()
         elif self.operation_mode == 1:
-            self.qp_otimization.islanded_optimization_3th()
+            self.qp_optimization.islanded_optimization_3th()
 
 
 
