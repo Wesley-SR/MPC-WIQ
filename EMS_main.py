@@ -154,21 +154,23 @@ class EMS():
         self.Datas.p_pv = float(0.1)
         self.Datas.p_load = float(-79.5)
         
+        # Update the first row of the I_3th matrix
+        self.Datas.I_3th.loc[0, 'pv_forecast'] = float(self.Datas.p_pv)
+        self.Datas.I_3th.loc[0, 'load_forecast'] = float(self.Datas.p_load)
+        
 
 
 
     def get_forecast_pv(self):
         p_pv = np.array([0, 0, 0, 0, 0, 0, 3, 12, 25, 35, 40, 45, 50, 60, 50, 40, 10, 7, 0, 0, 0, 0, 0, 0])  # Exemplo de geração do PV em kWh
-        self.Datas.I_3th.loc[:, 'pv_forecast'] = p_pv[:]
-        self.Datas.I_3th.loc[0, 'pv_forecast'] = float(self.Datas.p_pv)
+        self.Datas.I_3th.loc[1:, 'pv_forecast'] = p_pv[1:]
         
 
 
 
     def get_forecast_load(self):
         p_load = np.array([-0, -5, -13, -20, -40, -45, -65, -35, -38, -20, -18, -40, -48, -56, -70, -50, -40, -40, -35, -32, -27, -25, -20, -15])  # Exemplo de demanda em kWh
-        self.Datas.I_3th.loc[:, 'load_forecast'] = p_load[:]
-        self.Datas.I_3th.loc[0, 'load_forecast'] = float(self.Datas.p_load)
+        self.Datas.I_3th.loc[1:, 'load_forecast'] = p_load[1:]
         
 
 
