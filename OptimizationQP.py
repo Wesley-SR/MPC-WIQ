@@ -2,7 +2,7 @@
 """
 Created on Sat Aug 19 18:23:10 2023
 
-@author: Wesley
+@author: Wesley Rodrigues
 """
 
 import cvxpy as cp
@@ -16,13 +16,15 @@ class OptimizationQP:
     def __init__(self, Datas):
         
         self.Datas = Datas
-       
+        
         # Weightings for objective function
-        self.K_PV_REF_3TH = 1
+        # 3th
         self.WEIGHTING_K_PV_3TH = 1
         self.WEIGHTING_DELTA_BAT_3TH = 0.45
-        self.WEIGHTING_REF_BAT_3TH = 0.45
-        self.WEIGHTING_REF_SC_3TH = 0.45
+        # 2th
+        self.WEIGHTING_K_PV_2TH = 0.45
+        self.WEIGHTING_REF_BAT_2TH = 0.45
+        self.WEIGHTING_SOC_SC_2TH = 0.001
         
         
         
@@ -39,7 +41,7 @@ class OptimizationQP:
         k_pv = cp.Variable(self.Datas.NP_3TH)
         
         # Optimization problem
-        objective = cp.Minimize(cp.sum_squares(k_pv - self.K_PV_REF_3TH)*self.WEIGHTING_K_PV_3TH +
+        objective = cp.Minimize(cp.sum_squares(k_pv - self.Datas.K_PV_REF_3TH)*self.WEIGHTING_K_PV_3TH +
                                 cp.sum_squares(p_bat))
         constraints = []
         
@@ -167,31 +169,44 @@ class OptimizationQP:
         p_bat = cp.Variable(self.Datas.NP_2TH)
         soc_bat = cp.Variable(self.Datas.NP_2TH)
         k_pv = cp.Variable(self.Datas.NP_2TH)
+        p_sc = cp.Variable(self.Datas.NP_2TH)
+        soc_sc = cp.Variable(self.Datas.NP_2TH)
                 
         # Optimization problem
-        objective = cp.Minimize(cp.sum_squares(k_pv - self.Datas.R_3th.loc[t, 'k_pv_3th'])*self.WEIGHTING_K_PV_3TH 
-                                + cp.sum_squares(p_bat - self.Datas.R_3th.loc[t, 'p_bat_3th'])
+        objective = cp.Minimize(cp.sum_squares(k_pv - self.Datas.R_3th.loc[t, 'k_pv_3th'])*self.WEIGHTING_K_PV_2TH 
+                                + cp.sum_squares(soc_bat - self.Datas.R_3th.loc[t, 'soc_bat_3th'])*self.WEIGHTING_REF_BAT_2TH
+                                + cp.sum_squares(soc_sc - self.Datas.SOC_SC_REF)*self.WEIGHTING_SOC_SC_2TH
                                 )
+        # TODO: Test wigh battery degradation
+        
         constraints = []
         
         # MPC LOOP
-        for t in range(0, self.Datas.NP_3TH):
+        for t in range(0, self.Datas.NP_2TH):
 
             # Power balance
-            constraints.append(self.Datas.I_2th.loc[t, 'pv_forecast'] + p_bat[t] + self.Datas.I_2th.loc[t, 'load_forecast'] == 0)
+            constraints.append(k_pv[t]*self.Datas.I_2th.loc[t, 'pv_forecast'] + p_bat[t] + self.Datas.I_2th.loc[t, 'load_forecast'] == 0)
             # TODO: Insert variable k_pv
 
             # Battery SOC
-            if t == 0:
-                constraints.append(soc_bat[t] == self.Datas.soc_bat) # Now
+            if t == 0: # Now
+                constraints.append(soc_bat[t] == self.Datas.soc_bat)
+                constraints.append(soc_sc[t] == self.Datas.soc_sc)
             else:
                 constraints.append(soc_bat[t] == soc_bat[t-1] - p_bat[t-1]*self.Datas.TS_2TH/self.Datas.Q_BAT)
+                constraints.append(soc_sc[t] == soc_sc[t-1] - p_sc[t-1]*self.Datas.TS_2TH/self.Datas.Q_SC)
             
             # Technical constrains
             constraints.append(soc_bat[t] >= self.Datas.SOC_BAT_MIN)
             constraints.append(soc_bat[t] <= self.Datas.SOC_BAT_MAX)
             constraints.append(p_bat[t] >= self.Datas.P_BAT_MIN)
             constraints.append(p_bat[t] <= self.Datas.P_BAT_MAX)
+            
+            constraints.append(soc_sc[t] >= self.Datas.SOC_SC_MIN)
+            constraints.append(soc_sc[t] <= self.Datas.SOC_SC_MAX)
+            constraints.append(p_sc[t] >= self.Datas.P_SC_MIN)
+            constraints.append(p_sc[t] <= self.Datas.P_SC_MAX)
+            
             constraints.append(k_pv[t] >= 0)
             constraints.append(k_pv[t] <= 1)
             
@@ -206,8 +221,9 @@ class OptimizationQP:
             self.Datas.R_2th.loc[t, 'p_bat_2th'] = p_bat.value[t]
             self.Datas.R_2th.loc[t, 'p_grid_2th'] = 0
             self.Datas.R_2th.loc[t, 'soc_bat_2th'] = soc_bat.value[t]
+            self.Datas.R_2th.loc[t, 'soc_sc_2th'] = soc_sc.value[t]
             self.Datas.R_2th.loc[t, 'k_pv_2th'] = k_pv.value[t]
-        
+
         self.Datas.R_2th.loc[0, 'FO'] = problem.value
 
 

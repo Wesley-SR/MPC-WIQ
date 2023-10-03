@@ -4,12 +4,18 @@ Created on Sat Aug 22 21:39:00 2023
 @author: Wesley
 """
 
+# Python libs
 import time
 import pandas as pd
-from OptimizationQP import OptimizationQP
-from Datas import Datas
 import numpy as np
 import matplotlib.pyplot as plt
+
+# My libs
+from OptimizationQP import OptimizationQP
+from Datas import Datas
+from ForecastMm import run_forecast_mm
+
+
 
 
 class EMS():
@@ -63,8 +69,8 @@ class EMS():
                 print("Time to 3th optmization: {}".format(time.time() - before_opt_3th))
 
             # Run 2th optmization
-            # if (self.is_it_time_to_run_the_2th()):
-            #    self.run_2th_optimization()
+            if (self.is_it_time_to_run_the_2th()):
+               self.run_2th_optimization()
 
             # Check if it's time to stop the code
             self.stop_mpc = True # Test for now
@@ -132,14 +138,27 @@ class EMS():
 
 
     def run_2th_optimization():
-        pass
-        # self.qp_optimization.connected_tertiary_optimization(self.operation_mode, soc_bat_current, p_pv, p_load)
-
+        
+        # Update the first row of the I_2th matrix
+        self.Datas.I_2th.loc[:, 'pv_forecast'] = self.Datas.p_pv
+        self.Datas.I_2th.loc[:, 'load_forecast'] = self.Datas.p_load
+        
+        # Call optimization
+        if self.operation_mode == 0:
+            self.qp_optimization.connected_optimization_2th()
+        elif self.operation_mode == 1:
+            self.qp_optimization.islanded_optimization_2th()
 
 
 
 
     def run_3th_optimization(self):
+        
+        # Update the first row of the I_3th matrix
+        self.Datas.I_3th.loc[0, 'pv_forecast'] = self.Datas.p_pv
+        self.Datas.I_3th.loc[0, 'load_forecast'] = self.Datas.p_load
+        
+        # Call optimization
         if self.operation_mode == 0:
             self.qp_optimization.connected_optimization_3th()
         elif self.operation_mode == 1:
@@ -154,11 +173,6 @@ class EMS():
         self.Datas.p_pv = float(0.1)
         self.Datas.p_load = float(-79.5)
         
-        # Update the first row of the I_3th matrix
-        self.Datas.I_3th.loc[0, 'pv_forecast'] = float(self.Datas.p_pv)
-        self.Datas.I_3th.loc[0, 'load_forecast'] = float(self.Datas.p_load)
-        
-
 
 
     def get_forecast_pv(self):
@@ -220,6 +234,7 @@ class EMS():
         
         
 if __name__ == "__main__":
+
     EMS_instance = EMS()
     
     I_3th, R_3th = EMS_instance.run()

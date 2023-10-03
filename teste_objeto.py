@@ -9,8 +9,8 @@ class ClasseExterna:
     def __init__(self):
         self.Dados = Datas()
         
-        print(self.Dados.I_3th['pv_forecast'])
-        print(self.Dados.I_3th.loc[0, 'pv_forecast'])
+        # print(self.Dados.I_3th['pv_forecast'])
+        # print(self.Dados.I_3th.loc[0, 'pv_forecast'])
         
         # Aqui está a cereja do bolo. Passa com o "self" o argumento para as outras classes
         self.edita1 = Edita1(self.Dados)  # Passando o objeto Dados para Edita1
@@ -29,7 +29,7 @@ class Edita1:
 
     def editar_valor(self, novo_valor):
         self.Dados.valor = novo_valor
-        self.Dados.I_3th.loc[3,'pv_forecast'] = 133.58
+        self.Dados.I_3th.loc[3,'pv_forecast'] = 'Colocado por Edita1.edita_valor'
 
     def imprimir_valor(self):
         print(f"Valor atual: {self.Dados.valor}")
@@ -50,8 +50,7 @@ class Edita2:
 
     def editar_valor(self, novo_valor):
         self.Dados.valor = novo_valor
-        self.Dados.I_3th.loc[15,'pv_forecast'] = 958.45
-        self.Dados.I_3th.loc[15,'pv_forecast'] = self.Dados.p_pv
+        self.Dados.I_3th.loc[15,'pv_forecast'] = 'Colocado por Edita2.edita_valor'
 
 
 
@@ -65,20 +64,20 @@ class Edita2:
 classe_externa = ClasseExterna()
 
 # Edita1 altera o valor
-classe_externa.edita1.editar_valor(42)
+classe_externa.edita1.editar_valor('Posto por edita1 por argumento')
 
 # Edita2 imprime o valor definido pelo Edita1
-classe_externa.edita2.imprimir_valor()
+# classe_externa.edita2.imprimir_valor()
 
 # Edita2 altera o valor novamente
-classe_externa.edita2.editar_valor(100)
+classe_externa.edita2.editar_valor('Posto por edita2 por argumento')
 
 # Edita1 imprime o valor atualizado pelo Edita2
-classe_externa.edita1.imprimir_valor()
+# classe_externa.edita1.imprimir_valor()
 
-print(classe_externa.Dados.I_3th['pv_forecast'])
+# print(classe_externa.Dados.I_3th['pv_forecast'])
 
-classe_externa.Dados.I_3th.loc[16,'pv_forecast'] = 785.33
-print(classe_externa.Dados.I_3th.loc[16,'pv_forecast'])
+classe_externa.Dados.I_3th.loc[16,'pv_forecast'] = 'Posto por fora'
+# print(classe_externa.Dados.I_3th.loc[16,'pv_forecast'])
 
 print(classe_externa.Dados.I_3th['pv_forecast'])
