@@ -6,18 +6,21 @@ Created on Sat Oct 30 20:17:00 2023
 """
 
 import pandas as pd
+from scipy import io
 
 class Comunication():
     def __init__(self, Q_BAT, Q_SC):
         
+        mat = io.loadmat('Demanda_SNPTEE.mat')
+        load = mat['load']
         M = pd.read_csv('M.csv', index_col=['tempo'], sep=",")
         
         self.p_pv = 0
         self.p_load = 0
         self.soc_bat = 0
         self.soc_sc = 0 
-    
-   
+
+
     def get_soc_bat(self, p, ts):
         return self.soc_bat
     
@@ -29,4 +32,4 @@ class Comunication():
     
     def get_p_load(self):
         return self.p_load
-      
+    

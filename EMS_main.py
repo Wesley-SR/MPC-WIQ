@@ -4,6 +4,8 @@ Created on Sat Aug 22 21:39:00 2023
 @author: Wesley
 """
 
+#TODO: To download and to test the PVLIB and PyBaMM libraries!
+
 # Python libs
 import time
 import pandas as pd
