@@ -45,23 +45,19 @@ class Datas:
         
         
         ''' ------------------- Matrices for 3th ------------------- '''
-        # input for optimization
-        self.I_3th = pd.DataFrame({'pv_forecast': [0.0]*self.NP_3TH,
-                                   'tariff_pur': [0.5]*self.NP_3TH,
-                                   'tariff_sale': [0.5]*self.NP_3TH,
-                                   'load_forecast': [0.0]*self.NP_3TH,
-                                   })
-        
-        # Main
-        self.M_3th = pd.DataFrame({'pv': [0.0]*self.NP_3TH,
-                                   'tariff_pur': [0.5]*self.NP_3TH,
-                                   'tariff_sale': [0.5]*self.NP_3TH,
-                                   'load': [0.0]*self.NP_3TH,
-                                   })
+        self.P_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
+                                   'p_load': [0.0]*self.NP_3TH})
         
         # Forecast
-        self.F_3th = pd.DataFrame({'pv_forecast': [0.0]*self.NP_3TH,
-                                   'load_forecast': [0.0]*self.NP_3TH})
+        self.F_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
+                                   'p_load': [0.0]*self.NP_3TH})
+        
+        # Input for optimization
+        self.I_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
+                                   'tariff_pur': [0.5]*self.NP_3TH,
+                                   'tariff_sale': [0.5]*self.NP_3TH,
+                                   'p_load': [0.0]*self.NP_3TH,
+                                   })
         
         # Result of optimization
         self.R_3th = pd.DataFrame({'p_bat_3th': [0.0]*self.NP_3TH,
@@ -70,19 +66,24 @@ class Datas:
                                    'k_pv_3th': [0.0]*self.NP_3TH,
                                    'FO_3th': [0.0]*self.NP_3TH})
         
-        
-        
+        # Main
+        self.M_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
+                                   'tariff_pur': [0.5]*self.NP_3TH,
+                                   'tariff_sale': [0.5]*self.NP_3TH,
+                                   'p_load': [0.0]*self.NP_3TH,
+                                   })
         
         
         ''' ------------------- Matrices for 2th ------------------- '''
-        self.I_2th = pd.DataFrame({'pv_forecast': [0.0]*self.NP_2TH,
+       
+        self.I_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
                                    'tariff_pur': [0.5]*self.NP_2TH,
                                    'tariff_sale': [0.4]*self.NP_2TH,
-                                   'load_forecast': [0.0]*self.NP_2TH,
+                                   'p_load': [0.0]*self.NP_2TH,
                                    })
         
-        self.F_2th = pd.DataFrame({'pv_forecast': [0.0]*self.NP_2TH,
-                                   'load_forecast': [0.0]*self.NP_2TH})
+        self.F_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
+                                   'p_load': [0.0]*self.NP_2TH})
         
         self.R_2th = pd.DataFrame({'p_bat_2th': [0.0]*self.NP_2TH,
                                    'p_grid_2th': [0.0]*self.NP_2TH,
