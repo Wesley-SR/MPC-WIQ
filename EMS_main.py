@@ -139,7 +139,7 @@ class EMS():
 
 
 
-    def run_2th_optimization():
+    def run_2th_optimization(self):
         
         # Update the first row of the I_2th matrix
         self.Datas.I_2th.loc[:, 'pv_forecast'] = self.Datas.p_pv
@@ -172,9 +172,13 @@ class EMS():
     
     def get_measurements(self):
         # Simula a captura de dados
-        self.Datas.p_pv = float(0.1)
-        self.Datas.p_load = float(-79.5)
+        # TODO: Talvez eu possa criar uma thread para ficar lendo os dados e atualizando
+        self.Datas.p_pv = float(0.1) # Chamar funções
+        self.Datas.p_load = float(-79.5) # Chamar funções
         
+        self.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.P_3th.iloc[1:self.Datas.NP_3TH] # Descarta a amostra mais antiga
+        self.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv
+        self.P_3th.at[self.Datas.NP_3TH, 'p_load'] = self.Datas.p_load
 
 
     def get_forecast_pv(self):

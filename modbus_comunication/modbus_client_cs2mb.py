@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Esse clientódigo lê os dados de um CSV e escreve na rede Modbus
+# Esse client código lê os dados de um CSV e escreve na rede Modbus
 # Fonte:
     # https://www.youtube.com/watch?v=FYPQgnQE9fk&ab_channel=Johannes4GNU_Linux
     # https://github.com/Johannes4Linux/Simple-ModbusTCP-Server/blob/master/Simple_ModbusServer.py
