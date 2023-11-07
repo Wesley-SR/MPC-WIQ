@@ -11,6 +11,7 @@ import time
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import modbus_comunication.modbus_client_cs2mb
 
 # My libs
 from OptimizationQP import OptimizationQP

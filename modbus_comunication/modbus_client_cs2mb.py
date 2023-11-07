@@ -18,10 +18,10 @@ import pandas as pd
 if __name__ == '__main__':
 
     # caminho = "C:\Users\wesle\Dropbox\Lactec\DADOS\MPC_MATLAB_Peak_shaving_Suavizacao_Regulacao\Curva_carga_dia_08_11_17.csv"
-    caminho_do_arquivo = "Curva_carga_dia_08_11_17.csv"
+    caminho_do_arquivo = "cs2mb_datas.csv"
     
     # Faz a leitura do arquivo
-    medidas_csv = pd.read_csv(caminho_do_arquivo)
+    medidas = pd.read_csv(caminho_do_arquivo)
     
     # init modbus client
     host = 'localhost'
@@ -32,55 +32,39 @@ if __name__ == '__main__':
     try:
         client = ModbusClient(host = host, port=port, unit_id = client_ID, debug=False, auto_open=True)
         # print("Client info: {}".format())
+        time.sleep(1)
     except ValueError:
         print("Error with host or port params")
     
-    # main read loop
-    contador = 1
-    somar = 1
-    
-    # Alimentador das medições do P_ativa_carga (P), P_reativa_carga (Q) e P_pv (PV)
+    cont_mb = 0
+    new_mb_data = 0
+
     while True:
         
-        # Lê a linha atual (no caso a 144) a partir da linha 144 (substituir por medições online)
-        N = medidas_csv.iloc[contador].values
-        M = [int(N[0]), int(N[1]), int(N[2]), int(N[3])] # Amostra, P, Q e PV
-        amostra = M[0]
-        P_ativa = M[1]
-        P_reativa = M[2]
-        P_pv = M[3]
-        address = 5
-        time.sleep(2)
-        try:
-            
-            # Leitura
-            print("\n\n")
-            registers = client.read_holding_registers(address, 6)
-            # if success display registers
+        #try:
+        # Confere se chegou dados novos
+        print("\n\n")
+        registers = client.read_holding_registers(1, 1)
+        new_mb_data = int(registers[0])
+        if new_mb_data:
+            registers = client.read_holding_registers(0, 9)
             if registers:
-                print("Read: Amostra = {amostra}, P = {P},   Q = {Q},   PV = {PV}".format(amostra=registers[0], P=registers[1], Q=registers[2], PV=registers[3]))
-            else:
-                print('unable to read registers \n')            
-
-            # Escrita
-            print("Write: Amostra = {amostra}, P = {P},   Q = {Q},   PV = {PV}".format(amostra=amostra, P=P_ativa, Q=P_reativa, PV=P_pv))
-            client.write_multiple_registers(address,M)
-            
-            # Leitura
-            registers = client.read_holding_registers(address, 6)
-            # if success display registers
-            if registers:
-                print("Read: Amostra = {amostra}, P = {P},   Q = {Q},   PV = {PV}".format(amostra=registers[0], P=registers[1], Q=registers[2], PV=registers[3]))
+                print("cont_mb = {}, new_mb_data = {}, p_pv = {}, p_load = {}, p_grid = {}, p_bat = {}, p_sc = {}, soc_bat = {}, soc_sc = {}".format(registers[0], registers[1], registers[2], registers[3], registers[4], registers[5], registers[6], registers[7], registers[8]))
+                medidas.loc[cont_mb, 'p_pv'] = registers[2]/1000
+                medidas.loc[cont_mb, 'p_load'] = registers[3]/1000
+                cont_mb += 1
+                new_mb_data = 0
+                client.write_multiple_registers(0, [cont_mb, new_mb_data])
             else:
                 print('unable to read registers \n')
+        else:
+            print("Don't have new data")
 
-            contador += 1
-            if contador > 287:
-                contador = 1
-        except:
-            print("Erro de conexao")
-            client.close()
-            break
-
-    
+        time.sleep(2)
+        
+        #except Exception as e:
+        #    print("Erro de conexao devido: {}".format(e))
+        #    client.close()
+        #    break
+               
     print("Cliente encerrado")

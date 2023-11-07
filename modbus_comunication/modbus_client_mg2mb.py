@@ -8,7 +8,6 @@
     # https://pymodbustcp.readthedocs.io/en/latest/package/class_ModbusServer.html?highlight=server#class-modbusserver
 
 # read_register
-# read 10 registers and print result on stdout
 
 import time
 
@@ -17,8 +16,7 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    # caminho = "C:\Users\wesle\Dropbox\Lactec\DADOS\MPC_MATLAB_Peak_shaving_Suavizacao_Regulacao\Curva_carga_dia_08_11_17.csv"
-    caminho_do_arquivo = "Dados_medidos.csv"
+    caminho_do_arquivo = "microgrid_measurements.csv"
     
     # Faz a leitura do arquivo
     medidas_csv = pd.read_csv(caminho_do_arquivo)
@@ -35,51 +33,48 @@ if __name__ == '__main__':
     except ValueError:
         print("Error with host or port params")
     
-    # main read loop
-    Np_2th = 96
-    contador = Np_2th
+    Np_2th = 288
+    cont_mb = 0
+    last_cont_mb = 0
+    new_mb_data = 0
+    run = 0
+
+    #try:
+    registers = client.read_holding_registers(1, 1)
+    cont_mb = int(registers[0])
+    new_mb_data = 1
+    p_pv = int((medidas_csv.loc[cont_mb, 'p_pv'])*1000)
+    p_load = int((medidas_csv.loc[cont_mb, 'p_load'])*1000)
+    data_to_write = [new_mb_data, p_pv, p_load]
+    print("Send first data: {}  {}  {}".format(data_to_write[0], data_to_write[1], data_to_write[2]))
+    client.write_multiple_registers(1, data_to_write)
     
-    # Alimentador das medições do p_pv_carga (P), p_load_carga (Q) e P_pv (PV)
-    while True:
+    run = 1
+    #except Exception as e:
+    #    print("Erro de conexao devido: {}".format(e))
+    #    client.close()
+    
+    while run:
         
-        # Lê a linha atual a partir da linha 0 (substituir por medições online)
-        N = medidas_csv.iloc[contador].values
-        M = [int(N[0]), int(N[1]), int(N[2]), int(N[3])] # Amostra, P, Q e PV
-        amostra = M[0]
-        p_pv = M[1]
-        p_load = M[2]
-        address = 5
-        time.sleep(1)
-        try:
-            
-            # Leitura
-            print("\n\n")
-            registers = client.read_holding_registers(address, 6)
-            # if success display registers
-            if registers:
-                print("Read: Amostra = {amostra}, P = {P},   Q = {Q},   PV = {PV}".format(amostra=registers[0], P=registers[1], Q=registers[2], PV=registers[3]))
-            else:
-                print('unable to read registers \n')            
+        number_of_register_to_read = 9
+        time.sleep(0.3)
+        #try:
+        
+        registers = client.read_holding_registers(0, 2)
+        cont_mb = int(registers[0])
+        new_mb_data = int(registers[1])
+        if (cont_mb != last_cont_mb) and (not new_mb_data):
+            last_cont_mb = cont_mb
+            new_mb_data = 1
+            p_pv = int((medidas_csv.loc[cont_mb, 'p_pv'])*1000)
+            p_load = int((medidas_csv.loc[cont_mb, 'p_load'])*1000)
+            data_to_write = [new_mb_data, p_pv, p_load]
+            print("Send data: {}  {}  {}".format(data_to_write[0], data_to_write[1], data_to_write[2]))
+            client.write_multiple_registers(1, data_to_write) # mg2bm doesn't touch the cont_mb
+        
+        #except Exception as e:
+        #    print("Erro de conexao devido: {}".format(e))
+        #    client.close()
+        #    break
 
-            # Escrita
-            print("Write: Amostra = {amostra}, P = {P},   Q = {Q},   PV = {PV}".format(amostra=amostra, P=p_pv, Q=p_load, PV=P_pv))
-            client.write_multiple_registers(address,M)
-            
-            # Leitura
-            registers = client.read_holding_registers(address, 6)
-            # if success display registers
-            if registers:
-                print("Read: Amostra = {amostra}, P = {P},   Q = {Q},   PV = {PV}".format(amostra=registers[0], P=registers[1], Q=registers[2], PV=registers[3]))
-            else:
-                print('unable to read registers \n')
-
-            contador += 1
-            if contador > 2*Np_2th:
-                contador = 1
-        except:
-            print("Erro de conexao")
-            client.close()
-            break
-
-    
     print("Cliente encerrado")
