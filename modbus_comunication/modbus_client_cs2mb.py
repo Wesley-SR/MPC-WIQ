@@ -28,11 +28,12 @@ if __name__ == '__main__':
     # host = '127.1.0.0'
     port = 502
     client_ID = 2
+    Np = 288
     
     try:
         client = ModbusClient(host = host, port=port, unit_id = client_ID, debug=False, auto_open=True)
         # print("Client info: {}".format())
-        time.sleep(1)
+        time.sleep(0.05)
     except ValueError:
         print("Error with host or port params")
     
@@ -43,7 +44,6 @@ if __name__ == '__main__':
         
         #try:
         # Confere se chegou dados novos
-        print("\n\n")
         registers = client.read_holding_registers(1, 1)
         new_mb_data = int(registers[0])
         if new_mb_data:
@@ -58,9 +58,13 @@ if __name__ == '__main__':
             else:
                 print('unable to read registers \n')
         else:
-            print("Don't have new data")
+            print(".")
 
-        time.sleep(2)
+        time.sleep(0.05)
+        
+        if (cont_mb > Np*2-2):
+            cont_mb = 0
+        
         
         #except Exception as e:
         #    print("Erro de conexao devido: {}".format(e))

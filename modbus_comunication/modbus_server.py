@@ -24,8 +24,7 @@ if __name__ == '__main__':
     print("host= {}".format(IP_server))
     print("port= {}".format(port))
     
-    server = ModbusServer(IP_server, port, no_block=False)
-    databank = DataBank
+    server = ModbusServer(IP_server, port, no_block=True)
     
     print(server.ServerInfo())
     try:
@@ -33,30 +32,25 @@ if __name__ == '__main__':
         server.start()
         
         print("Server is online")
-        state = [0]
+        cont_mb = [0]
         cont = 1
         address = 0
-        data_list = [int(cont),int(cont)]
-        # databank.set_holding_registers(address, data_list,srv_info = None)
-        sleep(0.5)
-        print("databank 1 = {}".format(databank.get_words(address)))
+        sleep(0.05)
+        print("databank = {}".format(server.data_bank.get_holding_registers(address))) 
         while True:
-            if state != databank.get_words(address):
-                state = databank.get_words(address)
-                print("State = {}".format(state))
-                print("Mudou")
+            if cont_mb != server.data_bank.get_holding_registers(address):#databank.get_words(address):
+                cont_mb = server.data_bank.get_holding_registers(address)
+                print("cont_mb = {}".format(cont_mb[0]))
             else:
-                print("databank = {}".format(databank.get_words(address)))
-                print("Nao Mudou")
+                pass
+                #print("databank = {}".format(server.data_bank.get_holding_registers(address))) # (databank.get_words(address)))
+                print(".")
 
-            sleep(0.5)
+            sleep(0.05)
             cont = cont + 1
     
     except Exception as error:
         print(error)
-        print("Shutdown server ...")
-        server.stop()
-        print("Server is offline 1")
         
     finally:
         server.stop()
