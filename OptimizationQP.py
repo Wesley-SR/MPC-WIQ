@@ -29,8 +29,10 @@ class OptimizationQP:
         
         
 
-
-
+    ''' ------------------------------------------------------------------------------- 
+    Islanded Optimization 3th
+    --------------------------------------------------------------------------------'''
+    
     def islanded_optimization_3th(self):
         
         print("Islanded Optimization in 3th")
@@ -229,7 +231,9 @@ class OptimizationQP:
 
 
 
-
+    ''' ------------------------------------------------------------------------------- 
+    Islanded Optimization 2th
+    --------------------------------------------------------------------------------'''
     def connected_optimization_2th(self):
         # Simula a otimização secundária
         print("Otimização secundária da classe OptimizationQP...")
