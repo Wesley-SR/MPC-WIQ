@@ -112,7 +112,7 @@ class OptimizationQP:
 
 
         # MPC LOOP
-        for t in range(0,self.Datas.NP_3TH):
+        for t in range(0, self.Datas.NP_3TH):
 
             # Power balance
             constraints.append(self.Datas.I_3th.loc[t, 'pv_forecast'] + p_bat_ch[t] + p_pur[t] + self.Datas.I_3th.loc[t, 'load_forecast'] == 
