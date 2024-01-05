@@ -35,7 +35,7 @@ class EMS():
         self.last_time_2th = 0
         self.last_time_3th = 0
         
-        self.operation_mode = 0
+        self.connected_mode = 1
         # 0 -> QP.   Connected mode.
         # 1 -> QP.   Islanded mode.
         # 2 -> MILP. Connected mode.
@@ -69,10 +69,6 @@ class EMS():
             if (self.is_it_time_to_take_measurements()):
                 self.get_measurements()
 
-            # Forecast PV and Load
-            if (self.is_it_time_to_make_a_forecast()):
-                self.get_forecast_pv()
-                self.get_forecast_load()
 
             # Run terciary optmization
             if (self.is_it_time_to_run_3th()):
@@ -98,16 +94,13 @@ class EMS():
                 self.P_2th.at[self.Datas.NP_2TH, 'p_pv'] = self.Datas.p_pv # Atualiza a última amostra do PV
                 self.P_2th.at[self.Datas.NP_2TH, 'p_load'] = self.Datas.p_load # Atualiza a última amostra da carga
                 
-                # Update the first row of the I_3th matrix
-                self.Datas.I_2th.loc[0, 'pv_forecast'] = self.Datas.p_pv
-                self.Datas.I_2th.loc[0, 'load_forecast'] = self.Datas.p_load
-
-                # Run 2th forecast
-                self.Datas.I_2th.loc[1:, 'pv_forecast'] = self.Datas.p_pv
+                # Assumes the same value for the entire forecast horizon
+                self.Datas.I_2th.loc['pv_forecast'] = self.Datas.p_pv
+                self.Datas.I_2th.loc['load_forecast'] = self.Datas.p_load
                 
                 # Updates reference signals
-                # TODO:
-                # Observação. Decidir se passamos para o I_2th ou dentro do I_2th podemos acessar direto a saída do 3th
+                self.Datas.I_2th.loc['p_bat_ref'] = self.Datas.R_3th.loc[self.Datas.NP_3TH, 'p_bat_3th']
+                self.Datas.I_2th.loc['p_bat_ref'] = self.Datas.R_3th.loc[self.Datas.NP_3TH, 'p_bat_3th']
                 
                 # Run optimization 2th
                 self.run_2th_optimization()
@@ -171,9 +164,9 @@ class EMS():
         self.Datas.I_2th.loc[:, 'load_forecast'] = self.Datas.p_load
         
         # Call optimization
-        if self.operation_mode == 0:
+        if (self.connected_mode):
             self.qp_optimization.connected_optimization_2th()
-        elif self.operation_mode == 1:
+        else:
             self.qp_optimization.islanded_optimization_2th()
 
 
@@ -181,9 +174,9 @@ class EMS():
 
     def run_3th_optimization(self) -> None:       
         # Call optimization
-        if self.operation_mode == 0:
+        if (self.connected_mode):
             self.qp_optimization.connected_optimization_3th()
-        elif self.operation_mode == 1:
+        else:
             self.qp_optimization.islanded_optimization_3th()
 
 
@@ -232,7 +225,7 @@ class EMS():
         
         plt.figure(figsize=(10, 5))
         
-        if self.operation_mode == 0:
+        if (self.connected_mode):
             print("Plot p_grid")
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_grid_3th'], marker='o', linestyle='-', color='r', label='Grid')
         
@@ -248,7 +241,7 @@ class EMS():
         plt.grid()
 
         plt.figure(figsize=(10, 5))
-        if self.operation_mode == 1:
+        if (not self.connected_mode):
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'k_pv_3th'], marker='o', linestyle='-', color='r', label='k_pv_3th')
         
         plt.plot(time_steps, self.Datas.R_3th.loc[:, 'soc_bat_3th'], marker='o', linestyle='-', color='b', label='soc_bat')
