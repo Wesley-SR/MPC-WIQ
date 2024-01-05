@@ -77,13 +77,12 @@ class Datas:
         ''' ------------------- Matrices for 2th ------------------- '''
        
         self.I_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
-                                   'tariff_pur': [0.5]*self.NP_2TH,
-                                   'tariff_sale': [0.4]*self.NP_2TH,
                                    'p_load': [0.0]*self.NP_2TH,
+                                   'tariff_pur': [0.0]*self.NP_2TH,
+                                   'tariff_sale': [0.0]*self.NP_2TH,
+                                   'p_bat_ref': [0.0]*self.NP_2TH
                                    })
         
-        self.F_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
-                                   'p_load': [0.0]*self.NP_2TH})
         
         self.R_2th = pd.DataFrame({'p_bat_2th': [0.0]*self.NP_2TH,
                                    'p_grid_2th': [0.0]*self.NP_2TH,
