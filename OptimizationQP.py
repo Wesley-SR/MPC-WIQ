@@ -74,7 +74,7 @@ class OptimizationQP:
         problem = cp.Problem(objective, constraints)
         problem.solve(solver=cp.ECOS)
         
-        # Optimization Result
+        # Results
         for t in range(0, self.Datas.NP_3TH):
             self.Datas.R_3th.loc[t, 'p_bat_3th'] = p_bat.value[t]
             self.Datas.R_3th.loc[t, 'p_grid_3th'] = 0
