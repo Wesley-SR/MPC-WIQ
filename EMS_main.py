@@ -35,14 +35,16 @@ class EMS():
         self.last_time_2th = 0
         self.last_time_3th = 0
         
-        self.connected_mode = 1
-        # 0 -> QP.   Connected mode.
-        # 1 -> QP.   Islanded mode.
-        # 2 -> MILP. Connected mode.
-        # 3 -> MILP. Islanded mode.
+        # Operation mode: CONNECTED or SLANDED
+        self.operation_mode = "CONNECTED"
+        # Optmization method: QP or MILP
+        self.optimization_method = "QP"
         
-        self.qp_optimization = OptimizationQP(self.Datas)
-        # self.milp_optimization = OptimizationMILP(self.Datas)
+        # Create object optimization (create only one or keep two available?)
+        if optimization_method == "QP":
+            self.qp_optimization = OptimizationQP(self.Datas)
+        elif optimization_method == "MILP":
+            self.milp_optimization = OptimizationMILP(self.Datas)
         
         self.host = 'localhost'
         self.port = 502
@@ -52,7 +54,6 @@ class EMS():
         except Exception as error:
             print("Erro ao conectar o cliente Modbus: {}".format(e))
             self.modbus_client.close()
-            break
 
 
 
@@ -73,11 +74,12 @@ class EMS():
             # Run terciary optmization
             if (self.is_it_time_to_run_3th()):
                 # Update past 3th data
-                self.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.P_3th.iloc[1:self.Datas.NP_3TH] # Descarta a amostra mais antiga
-                self.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv # Atualiza a ultima amostra do PV
-                self.P_3th.at[self.Datas.NP_3TH, 'p_load'] = self.Datas.p_load # Atualiza a ultima amostra da carga
+                self.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.P_3th.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
+                self.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample
+                self.P_3th.at[self.Datas.NP_3TH, 'p_load'] = self.Datas.p_load # Update the new load sample
                 
                 # Update the first row of the I_3th matrix
+                ## The first row of the I_3th matrix is a measurement.
                 self.Datas.I_3th.loc[0, 'pv_forecast'] = self.Datas.p_pv
                 self.Datas.I_3th.loc[0, 'load_forecast'] = self.Datas.p_load
 
@@ -90,9 +92,9 @@ class EMS():
             # Run 2th optmization
             if (self.is_it_time_to_run_2th()):
                 # Update past 2th data
-                self.P_2th.iloc[0:self.Datas.NP_2TH-1] = self.P_2th.iloc[1:self.Datas.NP_2TH] # Descarta a amostra mais antiga
-                self.P_2th.at[self.Datas.NP_2TH, 'p_pv'] = self.Datas.p_pv # Atualiza a última amostra do PV
-                self.P_2th.at[self.Datas.NP_2TH, 'p_load'] = self.Datas.p_load # Atualiza a última amostra da carga
+                self.P_2th.iloc[0:self.Datas.NP_2TH-1] = self.P_2th.iloc[1:self.Datas.NP_2TH] # Discart the oldest sample
+                self.P_2th.at[self.Datas.NP_2TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample
+                self.P_2th.at[self.Datas.NP_2TH, 'p_load'] = self.Datas.p_load # Update the new load sample
                 
                 # Assumes the same value for the entire forecast horizon
                 self.Datas.I_2th.loc['pv_forecast'] = self.Datas.p_pv
@@ -164,22 +166,26 @@ class EMS():
         self.Datas.I_2th.loc[:, 'load_forecast'] = self.Datas.p_load
         
         # Call optimization
-        if (self.connected_mode):
-            self.qp_optimization.connected_optimization_2th()
-        else:
-            self.qp_optimization.islanded_optimization_2th()
+        if (self.operation_mode == "CONNECTED"):
+            if (self.optmization_method == "QP"):
+                self.qp_optimization.connected_optimization_2th()
+                
+        elif (self.operation_mode == "SLANDED"):
+            if (self.optmization_method == "QP"):
+                self.qp_optimization.islanded_optimization_2th()
 
 
 
 
     def run_3th_optimization(self) -> None:       
         # Call optimization
-        if (self.connected_mode):
-            self.qp_optimization.connected_optimization_3th()
-        else:
-            self.qp_optimization.islanded_optimization_3th()
-
-
+        if (self.operation_mode == "CONNECTED"):
+            if (self.optmization_method == "QP"):
+                self.qp_optimization.connected_optimization_3th()
+                
+        elif (self.operation_mode == "SLANDED"):
+            if (self.optmization_method == "QP"):
+                self.qp_optimization.islanded_optimization_3th()
 
 
     
@@ -225,7 +231,7 @@ class EMS():
         
         plt.figure(figsize=(10, 5))
         
-        if (self.connected_mode):
+        if (self.operation_mode):
             print("Plot p_grid")
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_grid_3th'], marker='o', linestyle='-', color='r', label='Grid')
         
@@ -241,7 +247,7 @@ class EMS():
         plt.grid()
 
         plt.figure(figsize=(10, 5))
-        if (not self.connected_mode):
+        if (not self.operation_mode):
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'k_pv_3th'], marker='o', linestyle='-', color='r', label='k_pv_3th')
         
         plt.plot(time_steps, self.Datas.R_3th.loc[:, 'soc_bat_3th'], marker='o', linestyle='-', color='b', label='soc_bat')

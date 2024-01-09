@@ -19,7 +19,7 @@ def run_forecast_mm(P, Np):
     for k in range(0, Np):
 
         previous_data.append([0])
-        previous_data[k] = P.loc[k,'PV_real']
+        previous_data[k] = P.loc[k,'potencia_PV']
         
     # P = P.to_numpy()
     # PREVISÃO PV:
@@ -36,3 +36,18 @@ def run_forecast_mm(P, Np):
     # p_rede_df.to_csv("online_forecast_pv.csv", index=False)
     
     return forecast
+
+
+if __name__ == "__main__":
+    original_series = pd.read_csv('Dados_PV_15_min_1ano.csv')
+    
+    to_test_1 = original_series.head(96)
+    to_test_2 = original_series.iloc[44:44+96]
+    
+    forecasted_1 = run_forecast_mm(to_test_1, 96)
+    forecasted_2 = run_forecast_mm(to_test_2, 96)
+    
+    
+    
+    
+    

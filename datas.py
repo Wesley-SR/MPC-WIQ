@@ -75,7 +75,6 @@ class Datas:
         
         
         ''' ------------------- Matrices for 2th ------------------- '''
-       
         self.I_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
                                    'p_load': [0.0]*self.NP_2TH,
                                    'tariff_pur': [0.0]*self.NP_2TH,
