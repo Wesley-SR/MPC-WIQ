@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 # from sklearn.preprocessing import MinMaxScaler
 # from keras.models import model_from_json
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 def run_forecast_mm(P, Np):
    
@@ -39,14 +39,51 @@ def run_forecast_mm(P, Np):
 
 
 if __name__ == "__main__":
-    original_series = pd.read_csv('Dados_PV_15_min_1ano.csv')
+    path = "C:\\Dados\\Wesley\\Mestrado\\Desenvolvimento\\Codigos\\MPC-WIQ\\A-Modelos_Previsao"
+    file = "\\Dados_PV_15_min_1ano.csv"
+    path_and_file = "{}{}".format(path, file)
+    original_series = pd.read_csv(path_and_file)
     
     to_test_1 = original_series.head(96)
-    to_test_2 = original_series.iloc[44:44+96]
+    to_test_2 = original_series.iloc[200:200+96].reset_index(drop=True)
     
     forecasted_1 = run_forecast_mm(to_test_1, 96)
     forecasted_2 = run_forecast_mm(to_test_2, 96)
     
+    # Dados reais futuros
+    real_obscuro_1 = original_series.iloc[96:96+96].reset_index(drop=True)
+    real_obscuro_2 = original_series.iloc[200+96:200+96+96].reset_index(drop=True)
+    
+    # Plotting to_test_1 and forecasted_1
+    plt.figure(figsize=(10, 5))
+    plt.subplot(2, 1, 1)  # Subplot for to_test_1 and forecasted_1
+    plt.plot(to_test_1['potencia_PV'], label='Dados de entrada 1')
+    plt.plot(forecasted_1['PV_previsao'], label='Previsão 1')
+    plt.plot(real_obscuro_1['potencia_PV'], label='Obscuro 1')
+
+    # Adding labels and title for subplot 1
+    plt.xlabel('Time')
+    plt.ylabel('Power')
+    plt.title('Actual vs Forecasted Data - Set 1')
+    plt.legend()
+
+    # Plotting to_test_2 and forecasted_2
+    plt.subplot(2, 1, 2)  # Subplot for to_test_2 and forecasted_2
+    plt.plot(to_test_2['potencia_PV'], label='Dados de entrada 2')
+    plt.plot(forecasted_2['PV_previsao'], label='Previsão 2')
+    plt.plot(real_obscuro_2['potencia_PV'], label='Obscuro 2')
+
+    # Adding labels and title for subplot 2
+    plt.xlabel('Time')
+    plt.ylabel('Power')
+    plt.title('Actual vs Forecasted Data - Set 2')
+    plt.legend()
+
+    # Adjust layout to prevent clipping
+    plt.tight_layout()
+
+    # Show the plot
+    plt.show()
     
     
     
