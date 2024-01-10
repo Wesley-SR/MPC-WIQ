@@ -43,16 +43,18 @@ if __name__ == "__main__":
     file = "\\Dados_PV_15_min_1ano.csv"
     path_and_file = "{}{}".format(path, file)
     original_series = pd.read_csv(path_and_file)
+    Np = 96
+    teste_dif_period = 42
     
-    to_test_1 = original_series.head(96)
-    to_test_2 = original_series.iloc[200:200+96].reset_index(drop=True)
+    to_test_1 = original_series.head(Np)
+    to_test_2 = original_series.iloc[teste_dif_period:teste_dif_period+96].reset_index(drop=True)
     
-    forecasted_1 = run_forecast_mm(to_test_1, 96)
-    forecasted_2 = run_forecast_mm(to_test_2, 96)
+    forecasted_1 = run_forecast_mm(to_test_1, Np)
+    forecasted_2 = run_forecast_mm(to_test_2, Np)
     
     # Dados reais futuros
-    real_obscuro_1 = original_series.iloc[96:96+96].reset_index(drop=True)
-    real_obscuro_2 = original_series.iloc[200+96:200+96+96].reset_index(drop=True)
+    real_obscuro_1 = original_series.iloc[96:2*Np].reset_index(drop=True)
+    real_obscuro_2 = original_series.iloc[teste_dif_period+Np:teste_dif_period+2*Np].reset_index(drop=True)
     
     # Plotting to_test_1 and forecasted_1
     plt.figure(figsize=(10, 5))
