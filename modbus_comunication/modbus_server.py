@@ -36,9 +36,10 @@ if __name__ == '__main__':
         cont = 1
         address = 0
         sleep(0.05)
-        print("databank = {}".format(server.data_bank.get_holding_registers(address))) 
+        print("databank = {}".format(server.data_bank.get_holding_registers(address)))
         while True:
-            if cont_mb != server.data_bank.get_holding_registers(address):#databank.get_words(address):
+            # The server keeps track of changes
+            if cont_mb != server.data_bank.get_holding_registers(address): # old -> databank.get_words(address):
                 cont_mb = server.data_bank.get_holding_registers(address)
                 print("cont_mb = {}".format(cont_mb[0]))
             else:
