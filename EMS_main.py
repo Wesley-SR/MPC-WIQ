@@ -41,9 +41,9 @@ class EMS():
         self.optimization_method = "QP"
         
         # Create object optimization (create only one or keep two available?)
-        if optimization_method == "QP":
+        if self.optimization_method == "QP":
             self.qp_optimization = OptimizationQP(self.Datas)
-        elif optimization_method == "MILP":
+        elif self.optimization_method == "MILP":
             self.milp_optimization = OptimizationMILP(self.Datas)
         
         self.host = 'localhost'
@@ -84,7 +84,8 @@ class EMS():
                 self.Datas.I_3th.loc[0, 'load_forecast'] = self.Datas.p_load
 
                 # Run 3th forecast
-                self.Datas.I_3th.loc[1:, 'pv_forecast'] = run_forecast_mm(P_3th[:, 'p_pv'])
+                self.Datas.I_3th.loc[1:, 'pv_forecast'] = run_forecast_mm(self.P_3th[:, 'p_pv'])
+                # TODO: Add ARIMA
                 
                 # Run optmization 3th
                 self.run_3th_optimization()
@@ -167,24 +168,30 @@ class EMS():
         
         # Call optimization
         if (self.operation_mode == "CONNECTED"):
-            if (self.optmization_method == "QP"):
+            if (self.optimization_method == "QP"):
                 self.qp_optimization.connected_optimization_2th()
+            elif (self.optimization_method == "MILP"):
+                print("TODO: MILP Optimization")
+                pass
+                
                 
         elif (self.operation_mode == "SLANDED"):
-            if (self.optmization_method == "QP"):
+            if (self.optimization_method == "QP"):
                 self.qp_optimization.islanded_optimization_2th()
-
+            elif (self.optimization_method == "MILP"):
+                print("TODO: MILP Optimization")
+                pass
 
 
 
     def run_3th_optimization(self) -> None:       
         # Call optimization
         if (self.operation_mode == "CONNECTED"):
-            if (self.optmization_method == "QP"):
+            if (self.optimization_method == "QP"):
                 self.qp_optimization.connected_optimization_3th()
                 
         elif (self.operation_mode == "SLANDED"):
-            if (self.optmization_method == "QP"):
+            if (self.optimization_method == "QP"):
                 self.qp_optimization.islanded_optimization_3th()
 
 
@@ -204,25 +211,9 @@ class EMS():
             self.Datas.soc_sc = registers[8]/1000
 
 
-    def get_forecast_pv(self) -> None:
-        p_pv = np.array([0, 0, 0, 0, 0, 0, 3, 12, 25, 35, 40, 45, 50, 60, 50, 40, 10, 7, 0, 0, 0, 0, 0, 0])  # Exemplo de geração do PV em kWh
-        self.Datas.I_3th.loc[1:, 'pv_forecast'] = p_pv[1:]
-        
-
-
-
-    def get_forecast_load(self) -> None:
-        p_load = np.array([-0, -5, -13, -20, -40, -45, -65, -35, -38, -20, -18, -40, -48, -56, -70, -50, -40, -40, -35, -32, -27, -25, -20, -15])  # Exemplo de demanda em kWh
-        self.Datas.I_3th.loc[1:, 'load_forecast'] = p_load[1:]
-        
-
-
-
 
     def stop(self) -> None:
         return self.stop_mpc
-
-
 
 
 
