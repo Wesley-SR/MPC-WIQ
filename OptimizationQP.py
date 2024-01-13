@@ -221,6 +221,7 @@ class OptimizationQP:
         # Optimization Result
         for t in range(0, self.Datas.NP_3TH):
             self.Datas.R_2th.loc[t, 'p_bat_2th'] = p_bat.value[t]
+            self.Datas.R_2th.loc[t, 'p_sc_2th'] = p_sc.value[t]
             self.Datas.R_2th.loc[t, 'p_grid_2th'] = 0
             self.Datas.R_2th.loc[t, 'soc_bat_2th'] = soc_bat.value[t]
             self.Datas.R_2th.loc[t, 'soc_sc_2th'] = soc_sc.value[t]

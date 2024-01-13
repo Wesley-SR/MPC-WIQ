@@ -15,7 +15,7 @@ import modbus_comunication.modbus_client_cs2mb
 
 # My libs
 from OptimizationQP import OptimizationQP
-from Datas import Datas
+from datas import Datas
 from ForecastMm import run_forecast_mm
 
 # Modbus
@@ -44,7 +44,7 @@ class EMS():
         if self.optimization_method == "QP":
             self.qp_optimization = OptimizationQP(self.Datas)
         elif self.optimization_method == "MILP":
-            self.milp_optimization = OptimizationMILP(self.Datas)
+            pass # self.milp_optimization = OptimizationMILP(self.Datas)
         
         self.host = 'localhost'
         self.port = 502
@@ -74,9 +74,9 @@ class EMS():
             # Run terciary optmization
             if (self.is_it_time_to_run_3th()):
                 # Update past 3th data
-                self.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.P_3th.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
-                self.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample
-                self.P_3th.at[self.Datas.NP_3TH, 'p_load'] = self.Datas.p_load # Update the new load sample
+                self.Datas.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.P_3th.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
+                self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample
+                self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_load'] = self.Datas.p_load # Update the new load sample
                 
                 # Update the first row of the I_3th matrix
                 ## The first row of the I_3th matrix is a measurement.
@@ -107,6 +107,8 @@ class EMS():
                 
                 # Run optimization 2th
                 self.run_2th_optimization()
+                
+                self.send_control_signals()
 
             # Check if it's time to stop the code
             self.stop_mpc = True # Test for now
@@ -201,15 +203,31 @@ class EMS():
         # TODO: Talvez eu possa criar uma thread para ficar lendo os dados e atualizando
         registers = self.modbus_client.read_holding_registers(0, 9)
         
+        # Operation mode
+        if (registers[2]):
+            self.operation_mode = "CONNECTED"
+        else:
+            self.operation_mode = "SLANDED"
+        
+        # Mensurements
         if registers:
-            self.Datas.p_pv = registers[2]/1000
-            self.Datas.p_load = registers[3]/1000
-            self.Datas.p_grid = registers[4]/1000
-            self.Datas.p_bat = registers[5]/1000
-            self.Datas.p_sc = registers[6]/1000
-            self.Datas.soc_bat = registers[7]/1000
-            self.Datas.soc_sc = registers[8]/1000
+            self.Datas.p_pv = registers[3]/1000
+            self.Datas.p_load = registers[4]/1000
+            self.Datas.p_grid = registers[5]/1000
+            self.Datas.p_bat = registers[6]/1000
+            self.Datas.p_sc = registers[7]/1000
+            self.Datas.soc_bat = registers[8]/1000
+            self.Datas.soc_sc = registers[9]/1000
 
+
+
+    def send_control_signals(self) -> None:
+        control_signals = [self.Datas.R_2th.loc['p_bat_2th', 0],
+                           self.Datas.R_2th.loc['p_sc_2th', 0],
+                           self.Datas.R_2th.loc['p_grid_2th', 0],
+                           self.Datas.R_2th.loc['k_pv', 0]]
+        self.modbus_client.write_multiple_registers(10, control_signals)
+    
 
 
     def stop(self) -> None:

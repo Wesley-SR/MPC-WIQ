@@ -42,6 +42,10 @@ class Datas:
         self.soc_sc = float(0.5)
         self.p_pv = float(0)
         self.p_load = float(-80)
+        self.p_grid = float(0)
+        self.p_bat = float(0)
+        self.p_sc = float(0)
+        
         
         
         ''' ------------------- Matrices for 3th ------------------- '''
@@ -75,6 +79,7 @@ class Datas:
         
         
         ''' ------------------- Matrices for 2th ------------------- '''
+        # Input for optimization
         self.I_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
                                    'p_load': [0.0]*self.NP_2TH,
                                    'tariff_pur': [0.0]*self.NP_2TH,
@@ -82,8 +87,9 @@ class Datas:
                                    'p_bat_ref': [0.0]*self.NP_2TH
                                    })
         
-        
+        # Result of optimization
         self.R_2th = pd.DataFrame({'p_bat_2th': [0.0]*self.NP_2TH,
+                                   'p_sc_2th': [0.0]*self.NP_2TH,
                                    'p_grid_2th': [0.0]*self.NP_2TH,
                                    'soc_bat_2th': [0.0]*self.NP_2TH,
                                    'k_pv_2th': [0.0]*self.NP_2TH,
