@@ -1,4 +1,4 @@
-Registrador,1,2,3,4,5,6,7,8,9,10,11,12
-Descrição,cont,p_pv,p_load,p_grid,p_bat,p_sc,soc_bat,soc_sc,cs_p_bat,cs_p_sc,cs_p_grid,cs_k_pv
-Exemplo 1,0,0,0.114970539,0,0,0,0,0,0,0,0,0
-Exemplo 2,1,0,0.262843073,0,0,0,0,0,0,0,0,0
+Registrador,1,2,3,4,5,6,7,8,9,10,11,12,13
+Descrição,cont,operation_mode,p_pv,p_load,p_grid,p_bat,p_sc,soc_bat,soc_sc,cs_p_bat,cs_p_sc,cs_p_grid,cs_k_pv
+Exemplo 1,0,0,0,0.114970539,0,0,0,0,0,0,0,0,0
+Exemplo 2,1,1,0,0.262843073,0,0,0,0,0,0,0,0,0

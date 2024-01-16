@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Aug 19 18:23:10 2023
+Created on Saturday August 19 18:23:10 2023
 
 @author: Wesley Rodrigues
 """

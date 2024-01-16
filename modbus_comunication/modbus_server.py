@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Modbus/TCP server
-#
+
 # run this as root to listen on TCP priviliged ports (<= 1024)
 # add "--host 0.0.0.0" to listen on all available IPv4 addresses of the host
 

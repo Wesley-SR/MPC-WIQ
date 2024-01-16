@@ -51,8 +51,8 @@ class EMS():
         self.client_ID = 2
         try:
             self.modbus_client = ModbusClient(host = self.host, port = self.port, unit_id = self.client_ID, debug=False, auto_open=True)
-        except Exception as error:
-            print("Erro ao conectar o cliente Modbus: {}".format(e))
+        except Exception as e:
+            print("Erros connecting Modbus Client: {}".format(e))
             self.modbus_client.close()
 
 
