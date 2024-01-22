@@ -71,8 +71,8 @@ class Microgrid():
         self.P_GRID_MAX = int(150)
         self.P_GRID_MIN = int(- 150)
         self.stop = 0
-        self.PV = pd.read_csv('PV.csv', index_col=['timestamp'],sep=",")
-        self.load = pd.read_csv('load.csv', index_col=['timestamp'],sep=",")
+        self.PV = pd.read_csv('PV_1_sec.csv', index_col=['timestamp'],sep=",")
+        self.load = pd.read_csv('load_1_sec.csv', index_col=['timestamp'],sep=",")
         
         # Variables
         self.operation_mode = "CONNECTED"
@@ -92,6 +92,8 @@ class Microgrid():
         
         
     def run(self) -> None:
+        step = 0
+
         while not self.stop:
             
             # Check times
