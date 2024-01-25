@@ -79,6 +79,9 @@ class Microgrid():
         self.last_time_measurement = 0
         self.last_time_control = 0
         
+        # Config variables
+        self.start_point = 0
+        
         # Modbus 
         self.host = 'localhost'
         self.port = 502
@@ -92,7 +95,7 @@ class Microgrid():
         
         
     def run(self) -> None:
-        step = 0
+        step = self.start_point
 
         while not self.stop:
             
@@ -100,9 +103,17 @@ class Microgrid():
             if (self.is_it_time_to_take_measurements()):
                 pass
                 # Get mensurements
-                # Power balance
-                    # Controle baseado em regras
-            
+                pv = self.PV[step, 'data']
+                load = self.PV[step, 'data']
+                
+                if (self.operation_mode == 'CONNECTED'):
+                    # Power balance - Controle baseado em regras
+                        
+                    pass
+
+                else:
+                    pass
+                
             if (self.is_it_time_to_take_control_signals()):
                 pass
                 # Get control signals
