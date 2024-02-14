@@ -67,10 +67,8 @@ class OptimizationQP:
             constraints.append(p_bat[t] <= self.Datas.P_BAT_MAX)
             constraints.append(k_pv[t] >= 0)
             constraints.append(k_pv[t] <= 1)
-            
 
-      
-
+        # SOLVER
         problem = cp.Problem(objective, constraints)
         problem.solve(solver=cp.ECOS)
         
@@ -118,7 +116,6 @@ class OptimizationQP:
             constraints.append(self.Datas.I_3th.loc[t, 'pv_forecast'] + p_bat_ch[t] + p_pur[t] + self.Datas.I_3th.loc[t, 'load_forecast'] == 
                                p_bat_dis[t] + p_sale[t])
             
-            
             # Battery SOC
             if t == 0:
                 constraints.append(soc_bat[t] == self.Datas.soc_bat)
@@ -141,8 +138,7 @@ class OptimizationQP:
             constraints.append(p_bat_dis[t] <= switching_bat[t]*self.Datas.P_BAT_MAX)
             
 
-
-
+        # SOLVER
         problem = cp.Problem(objective, constraints)
         problem.solve(solver=cp.ECOS)
         
@@ -214,7 +210,7 @@ class OptimizationQP:
             
 
       
-
+        # SOLVER
         problem = cp.Problem(objective, constraints)
         problem.solve(solver=cp.ECOS)
         
