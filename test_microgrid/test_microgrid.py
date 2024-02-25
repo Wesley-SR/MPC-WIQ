@@ -33,7 +33,7 @@ large_battery = BatteryModule(min_capacity=10,
 
 # load_ts = 100+100*np.random.rand(7) # random load data in the range [100, 200].
 # pv_ts = 200*np.random.rand(7) # random pv data in the range [0, 200].
-load_ts = [20, 20, 20, 20, 20, 20, 20] # random load data in the range [100, 200].
+load_ts = [20.3, 20, 20, 20, 20, 20, 20] # random load data in the range [100, 200].
 pv_ts =   [10,  10, 10, 10, 10, 10, 10] # random pv data in the range [0, 200].
 
 load = LoadModule(time_series=load_ts)
@@ -108,6 +108,14 @@ print(microgrid.log.loc[:, 'battery'])
 # microgrid.reset()
 for _ in range(6):
     microgrid.run(microgrid.sample_action(strict_bound=True))
+
+
+print("\n\n\n LOAD 0")
+print(microgrid.log.loc[:, pd.IndexSlice['load', 0, :]])
+print("\n\n\n PV")
+print(microgrid.log.loc[:, pd.IndexSlice['pv', 0, :]])
+print("\n\n\n BATTERY")
+print(microgrid.log.loc[:, 'battery'])
 
 microgrid.log[[('load', 0, 'load_met'), 
                ('pv', 0, 'renewable_used'),
