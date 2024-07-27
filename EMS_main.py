@@ -27,7 +27,7 @@ class EMS():
     def __init__(self):
 
         self.Datas = Datas()
-        print(self.Datas.I_3th.loc[0, 'pv_forecast'])
+        print(self.Datas.I_3th.loc[0, 'p_pv'])
         
         self.stop_mpc = False
         # Last Time
@@ -40,7 +40,7 @@ class EMS():
         # Optmization method: QP or MILP
         self.optimization_method = "QP"
         
-        # Create object optimization (create only one or keep two available?)
+        # Create object optimization
         if self.optimization_method == "QP":
             self.qp_optimization = OptimizationQP(self.Datas)
         elif self.optimization_method == "MILP":
@@ -58,7 +58,7 @@ class EMS():
 
 
     def run(self) -> None:
-
+        
         while not self.stop_mpc:
             print("EMS init")
             
@@ -74,7 +74,7 @@ class EMS():
             # Run terciary optmization
             if (self.is_it_time_to_run_3th()):
                 # Update past 3th data
-                self.Datas.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.P_3th.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
+                self.Datas.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.Datas.P_3th.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
                 self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample
                 self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_load'] = self.Datas.p_load # Update the new load sample
                 
@@ -84,7 +84,7 @@ class EMS():
                 self.Datas.I_3th.loc[0, 'load_forecast'] = self.Datas.p_load
 
                 # Run 3th forecast
-                self.Datas.I_3th.loc[1:, 'pv_forecast'] = run_forecast_mm(self.P_3th[:, 'p_pv'])
+                self.Datas.I_3th.loc[1:, 'pv_forecast'] = run_forecast_mm(self.Datas.P_3th[:, 'p_pv'])
                 # TODO: Add ARIMA
                 
                 # Run optmization 3th
@@ -93,9 +93,9 @@ class EMS():
             # Run 2th optmization
             if (self.is_it_time_to_run_2th()):
                 # Update past 2th data
-                self.P_2th.iloc[0:self.Datas.NP_2TH-1] = self.P_2th.iloc[1:self.Datas.NP_2TH] # Discart the oldest sample
-                self.P_2th.at[self.Datas.NP_2TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample
-                self.P_2th.at[self.Datas.NP_2TH, 'p_load'] = self.Datas.p_load # Update the new load sample
+                self.Datas.P_2th.iloc[0:self.Datas.NP_2TH-1] = self.Datas.P_2th.iloc[1:self.Datas.NP_2TH] # Discart the oldest sample
+                self.Datas.P_2th.at[self.Datas.NP_2TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample
+                self.Datas.P_2th.at[self.Datas.NP_2TH, 'p_load'] = self.Datas.p_load # Update the new load sample
                 
                 # Assumes the same value for the entire forecast horizon
                 self.Datas.I_2th.loc['pv_forecast'] = self.Datas.p_pv

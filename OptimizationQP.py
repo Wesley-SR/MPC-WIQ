@@ -38,9 +38,9 @@ class OptimizationQP:
         print("Islanded Optimization in 3th")
         
         # Optimization variables
-        p_bat = cp.Variable(self.Datas.NP_3TH)
+        p_bat   = cp.Variable(self.Datas.NP_3TH)
         soc_bat = cp.Variable(self.Datas.NP_3TH)
-        k_pv = cp.Variable(self.Datas.NP_3TH)
+        k_pv    = cp.Variable(self.Datas.NP_3TH)
         
         # Optimization problem
         objective = cp.Minimize(cp.sum_squares(k_pv - self.Datas.K_PV_REF_3TH)*self.WEIGHTING_K_PV_3TH +

@@ -79,6 +79,8 @@ class Datas:
         
         
         ''' ------------------- Matrices for 2th ------------------- '''
+        self.P_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
+                                   'p_load': [0.0]*self.NP_2TH})
         # Input for optimization
         self.I_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
                                    'p_load': [0.0]*self.NP_2TH,
