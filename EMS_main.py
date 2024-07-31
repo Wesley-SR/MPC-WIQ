@@ -17,12 +17,17 @@ import modbus_comunication.modbus_client_cs2mb
 from OptimizationQP import OptimizationQP
 from datas import Datas
 from ForecastMm import run_forecast_mm
+from ForecastingModel import ForecastingModel
 
 # Modbus
 from pyModbusTCP.client import ModbusClient
 
 
 
+
+# =======================================================
+#    # EMC CLASS                                        #
+# =======================================================
 class EMS():
     def __init__(self):
 
@@ -42,7 +47,7 @@ class EMS():
         
         # Create object optimization
         if self.optimization_method == "QP":
-            self.qp_optimization = OptimizationQP(self.Datas)
+            self.qp_optimization = OptimizationQP(self.Datas) # With the parameter self.Datas, the OptimizationQP methods can edit it
         elif self.optimization_method == "MILP":
             pass # self.milp_optimization = OptimizationMILP(self.Datas)
         
@@ -55,8 +60,16 @@ class EMS():
             print("Erros connecting Modbus Client: {}".format(e))
             self.modbus_client.close()
 
+        # Forecasting models
+        self.forecast = ForecastingModel(self.Datas.pv_path, self.Datas.load_path)
 
 
+
+
+
+    # =======================================================
+    #    # Principal loop of MPC                            #
+    # =======================================================
     def run(self) -> None:
         
         while not self.stop_mpc:
@@ -70,13 +83,12 @@ class EMS():
             if (self.is_it_time_to_take_measurements()):
                 self.get_measurements()
 
-
             # Run terciary optmization
             if (self.is_it_time_to_run_3th()):
                 # Update past 3th data
                 self.Datas.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.Datas.P_3th.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
-                self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample
-                self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_load'] = self.Datas.p_load # Update the new load sample
+                self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample with the actual data
+                self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_load'] = self.Datas.p_load # Update the new load sample with the actual data
                 
                 # Update the first row of the I_3th matrix
                 ## The first row of the I_3th matrix is a measurement.
@@ -84,8 +96,8 @@ class EMS():
                 self.Datas.I_3th.loc[0, 'load_forecast'] = self.Datas.p_load
 
                 # Run 3th forecast
-                self.Datas.I_3th.loc[1:, 'pv_forecast'] = run_forecast_mm(self.Datas.P_3th[:, 'p_pv'])
-                # TODO: Add ARIMA
+                self.Datas.I_3th.loc[1:, 'pv_forecast'] = self.forecast.predict_pv(self.Datas.P_3th[:, 'p_pv'])
+                self.Datas.I_3th.loc[1:, 'load_forecast'] = self.forecast.predict_load(self.Datas.P_3th[:, 'p_load'])
                 
                 # Run optmization 3th
                 self.run_3th_optimization()
@@ -122,7 +134,13 @@ class EMS():
 
 
 
-    def is_it_time_to_take_measurements(self) -> bool:
+
+    # =======================================================
+    #    # Auxiliaries functions                            #
+    # =======================================================
+
+    # Check if is time to take new measumerements for microgrid via Mudbus
+    def is_it_time_to_take_measurements(self) -> bool: 
         current_time = time.time()
         
         if (current_time - self.last_time_measurement >= self.Datas.TS_MEASUREMENT):
@@ -131,8 +149,6 @@ class EMS():
             return True
         else:
             return False
-
-
 
 
 
@@ -147,8 +163,6 @@ class EMS():
 
 
 
-
-
     def is_it_time_to_run_2th(self) -> bool:
         current_time = time.time()
         if (current_time - self.last_time_2th >= self.Datas.TS_2TH):
@@ -160,10 +174,20 @@ class EMS():
 
 
 
+    def run_3th_optimization(self) -> None:       
+        # Call optimization
+        if (self.operation_mode == "CONNECTED"):
+            if (self.optimization_method == "QP"):
+                self.qp_optimization.connected_optimization_3th()
+        elif (self.operation_mode == "SLANDED"):
+            if (self.optimization_method == "QP"):
+                self.qp_optimization.islanded_optimization_3th()
+        else:
+            print("Don't have optimization method")
+
 
 
     def run_2th_optimization(self) -> None:
-        
         # Update the first row of the I_2th matrix
         self.Datas.I_2th.loc[:, 'pv_forecast'] = self.Datas.p_pv
         self.Datas.I_2th.loc[:, 'load_forecast'] = self.Datas.p_load
@@ -175,8 +199,6 @@ class EMS():
             elif (self.optimization_method == "MILP"):
                 print("TODO: MILP Optimization")
                 pass
-                
-                
         elif (self.operation_mode == "SLANDED"):
             if (self.optimization_method == "QP"):
                 self.qp_optimization.islanded_optimization_2th()
@@ -185,25 +207,13 @@ class EMS():
                 pass
 
 
-
-    def run_3th_optimization(self) -> None:       
-        # Call optimization
-        if (self.operation_mode == "CONNECTED"):
-            if (self.optimization_method == "QP"):
-                self.qp_optimization.connected_optimization_3th()
-                
-        elif (self.operation_mode == "SLANDED"):
-            if (self.optimization_method == "QP"):
-                self.qp_optimization.islanded_optimization_3th()
-
-
     
     def get_measurements(self) -> None:
         # Simula a captura de dados
         # TODO: Talvez eu possa criar uma thread para ficar lendo os dados e atualizando
         registers = self.modbus_client.read_holding_registers(0, 9)
         
-        # Operation mode
+        # Operation mode 
         if (registers[2]):
             self.operation_mode = "CONNECTED"
         else:

@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 
 
 # Nome para arquivos e caminho
-arquivo = "Carga_5min"
-novo_arquivo = "Carga_30sec"
+arquivo = "load_5_min_a_day"
+novo_arquivo = "load_900_sec_2"
 caminho = "" # Por a barra "/" no caminho
 
 df_original = pd.read_csv("{}{}.csv".format(caminho,arquivo))
@@ -23,7 +23,7 @@ original_esta_em_minutos = 1
 original_esta_em_segundos = 0
 
 # Intervalo de amostragem desejado em segundos
-ts_segundos_desejado = 30
+ts_segundos_desejado = 15*60
 
 if original_esta_em_minutos:
 

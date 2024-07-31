@@ -11,6 +11,10 @@ import pandas as pd
 class Datas:
     def __init__(self):
         
+        # Paths
+        self.pv_path = "PV_model"
+        self.load_path = "Load_model"
+        
         # Time constants
         self.NP_2TH = 15 # seconds
         self.NP_3TH = 24 # minutes
@@ -22,14 +26,20 @@ class Datas:
 
         # Technical specification constans
         self.Q_BAT = int(12000)
-        self.COST_BAT = 50000
-        self.CC_BAT = self.COST_BAT/self.Q_BAT
-        self.N_BAT = 6000
-        self.COST_DEGR_BAT = 5*10^(-9)
+        # self.COST_BAT = 50000
+        # self.CC_BAT = self.COST_BAT/self.Q_BAT
+        # self.N_BAT = 6000
+        # self.COST_DEGR_BAT = 5*10^(-9)
         self.SOC_BAT_MIN = 0.2
         self.SOC_BAT_MAX = float(0.95)
         self.P_BAT_MAX = int(200)
         self.P_BAT_MIN = int(- 200)
+        
+        self.SOC_SC_MIN = 0.2
+        self.SOC_SC_MAX = float(0.95)
+        self.P_SC_MAX = int(200)
+        self.P_SC_MIN = int(- 200)
+        
         self.P_GRID_MAX = int(150)
         self.P_GRID_MIN = int(- 150)
         
@@ -45,8 +55,6 @@ class Datas:
         self.p_grid = float(0)
         self.p_bat = float(0)
         self.p_sc = float(0)
-        
-        
         
         ''' ------------------- Matrices for 3th ------------------- '''
         self.P_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
@@ -81,6 +89,10 @@ class Datas:
         ''' ------------------- Matrices for 2th ------------------- '''
         self.P_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
                                    'p_load': [0.0]*self.NP_2TH})
+        
+        self.F_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
+                                   'p_load': [0.0]*self.NP_2TH})
+        
         # Input for optimization
         self.I_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
                                    'p_load': [0.0]*self.NP_2TH,
