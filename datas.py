@@ -11,7 +11,7 @@ import pandas as pd
 class Datas:
     def __init__(self):
         
-        # Paths
+        # Paths for files
         self.pv_path = "PV_model"
         self.load_path = "Load_model"
         
@@ -24,7 +24,7 @@ class Datas:
         self.TS_FORECAST = 1 # minutes
         self.TIME_SLEEP = 0.3 # seconds
 
-        # Technical specification constans
+        # Technical specification constants
         self.Q_BAT = int(12000)
         # self.COST_BAT = 50000
         # self.CC_BAT = self.COST_BAT/self.Q_BAT
@@ -45,6 +45,7 @@ class Datas:
         
         # Optimization constants
         self.SOC_SC_REF = 0.5
+        self.SOC_BAT_REF = 0.8
         self.K_PV_REF_3TH = 1
         
         # Measurements

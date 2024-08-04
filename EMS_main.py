@@ -31,15 +31,19 @@ from pyModbusTCP.client import ModbusClient
 class EMS():
     def __init__(self):
 
+        # Create a object of datas
         self.Datas = Datas()
-        print(self.Datas.I_3th.loc[0, 'p_pv'])
         
-        self.stop_mpc = False
+        self.run_mpc = False
         # Last Time
         self.last_time_measurement = 0
         self.last_time_2th = 0
         self.last_time_3th = 0
         
+        # k
+        self.k = 0
+        self.j = 0
+
         # Operation mode: CONNECTED or SLANDED
         self.operation_mode = "CONNECTED"
         # Optmization method: QP or MILP
@@ -51,6 +55,7 @@ class EMS():
         elif self.optimization_method == "MILP":
             pass # self.milp_optimization = OptimizationMILP(self.Datas)
         
+        # Create Modbus object
         self.host = 'localhost'
         self.port = 502
         self.client_ID = 2
@@ -68,14 +73,13 @@ class EMS():
 
 
     # =======================================================
-    #    # Principal loop of MPC                            #
+    #    # Main loop of MPC                                 #
     # =======================================================
     def run(self) -> None:
         
-        while not self.stop_mpc:
-            print("EMS init")
-            
-            time.sleep(self.Datas.TIME_SLEEP)
+        while self.run_mpc:
+
+            print("EMS initialized \n")
 
             # Check if staying in island mode or connected mode
 
@@ -146,6 +150,7 @@ class EMS():
         if (current_time - self.last_time_measurement >= self.Datas.TS_MEASUREMENT):
             print("It's time to measurement")
             self.last_time_measurement = current_time
+
             return True
         else:
             return False
@@ -214,7 +219,7 @@ class EMS():
         registers = self.modbus_client.read_holding_registers(0, 9)
         
         # Operation mode 
-        if (registers[2]):
+        if (registers[2] == 1):
             self.operation_mode = "CONNECTED"
         else:
             self.operation_mode = "SLANDED"
