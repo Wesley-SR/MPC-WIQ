@@ -15,8 +15,8 @@ import modbus_comunication.modbus_client_cs2mb
 
 # My libs
 from OptimizationQP import OptimizationQP
+from OptimizationMILP import OptimizationMILP
 from datas import Datas
-from ForecastMm import run_forecast_mm
 from ForecastingModel import ForecastingModel
 
 # Modbus
@@ -34,7 +34,7 @@ class EMS():
         # Create a object of datas
         self.Datas = Datas()
         
-        self.run_mpc = False
+        self.run_mpc = True
         # Last Time
         self.last_time_measurement = 0
         self.last_time_2th = 0
@@ -44,16 +44,16 @@ class EMS():
         self.k = 0
         self.j = 0
 
-        # Operation mode: CONNECTED or SLANDED
-        self.operation_mode = "CONNECTED"
+        # Operation mode: CONNECTED or ISOLATED
+        self.operation_mode = "ISOLATED"
         # Optmization method: QP or MILP
-        self.optimization_method = "QP"
+        self.optimization_method = "MILP"
         
         # Create object optimization
         if self.optimization_method == "QP":
             self.qp_optimization = OptimizationQP(self.Datas) # With the parameter self.Datas, the OptimizationQP methods can edit it
         elif self.optimization_method == "MILP":
-            pass # self.milp_optimization = OptimizationMILP(self.Datas)
+            self.milp_optimization = OptimizationMILP(self.Datas)
         
         # Create Modbus object
         self.host = 'localhost'
@@ -64,6 +64,7 @@ class EMS():
         except Exception as e:
             print("Erros connecting Modbus Client: {}".format(e))
             self.modbus_client.close()
+        self.cont_mb = 0
 
         # Forecasting models
         self.forecast = ForecastingModel(self.Datas.pv_path, self.Datas.load_path)
@@ -127,13 +128,13 @@ class EMS():
                 self.send_control_signals()
 
             # Check if it's time to stop the code
-            self.stop_mpc = True # Test for now
-            if self.stop():
+            self.run_mpc = False # To run only a time
+            if not self.run_mpc:
                 break
             
         
         self.plot_result()
-        return self.Datas.I_3th, self.Datas.R_3th
+        return self.Datas
 
 
 
@@ -150,7 +151,6 @@ class EMS():
         if (current_time - self.last_time_measurement >= self.Datas.TS_MEASUREMENT):
             print("It's time to measurement")
             self.last_time_measurement = current_time
-
             return True
         else:
             return False
@@ -179,14 +179,23 @@ class EMS():
 
 
 
-    def run_3th_optimization(self) -> None:       
+    def run_3th_optimization(self) -> None:
         # Call optimization
         if (self.operation_mode == "CONNECTED"):
             if (self.optimization_method == "QP"):
                 self.qp_optimization.connected_optimization_3th()
-        elif (self.operation_mode == "SLANDED"):
+            elif(self.optimization_method == "MILP"):
+                # self.milp_optimization.connected_optimization_3th()
+                print("Dont have connected MILP")
+
+        elif (self.operation_mode == "ISOLATED"):
             if (self.optimization_method == "QP"):
-                self.qp_optimization.islanded_optimization_3th()
+                self.qp_optimization.isolated_optimization_3th()
+            elif (self.optimization_method == "MILP"):
+                self.milp_optimization.isolated_optimization_3th()
+            else:
+                print("Don't have optimization method")
+                
         else:
             print("Don't have optimization method")
 
@@ -204,9 +213,9 @@ class EMS():
             elif (self.optimization_method == "MILP"):
                 print("TODO: MILP Optimization")
                 pass
-        elif (self.operation_mode == "SLANDED"):
+        elif (self.operation_mode == "ISOLATED"):
             if (self.optimization_method == "QP"):
-                self.qp_optimization.islanded_optimization_2th()
+                self.qp_optimization.isolated_optimization_2th()
             elif (self.optimization_method == "MILP"):
                 print("TODO: MILP Optimization")
                 pass
@@ -216,24 +225,32 @@ class EMS():
     def get_measurements(self) -> None:
         # Simula a captura de dados
         # TODO: Talvez eu possa criar uma thread para ficar lendo os dados e atualizando
-        registers = self.modbus_client.read_holding_registers(0, 9)
-        
-        # Operation mode 
-        if (registers[2] == 1):
-            self.operation_mode = "CONNECTED"
-        else:
-            self.operation_mode = "SLANDED"
-        
-        # Mensurements
-        if registers:
-            self.Datas.p_pv = registers[3]/1000
-            self.Datas.p_load = registers[4]/1000
-            self.Datas.p_grid = registers[5]/1000
-            self.Datas.p_bat = registers[6]/1000
-            self.Datas.p_sc = registers[7]/1000
-            self.Datas.soc_bat = registers[8]/1000
-            self.Datas.soc_sc = registers[9]/1000
-
+        tray_again = 1
+        while tray_again:
+            registers = self.modbus_client.read_holding_registers(0, 9)
+            new_mb_data = int(registers[0])
+            if new_mb_data:
+            # Operation mode
+            
+                if (registers[2] == 1):
+                    self.operation_mode = "CONNECTED"
+                else:
+                    self.operation_mode = "ISOLATED"
+                
+                self.Datas.p_pv = registers[3]/1000
+                self.Datas.p_load = registers[4]/1000
+                self.Datas.p_grid = registers[5]/1000
+                self.Datas.p_bat = registers[6]/1000
+                self.Datas.p_sc = registers[7]/1000
+                self.Datas.soc_bat = registers[8]/1000
+                self.Datas.soc_sc = registers[9]/1000
+                
+                self.cont_mb += 1
+                new_mb_data = 0
+                self.modbus_client.write_multiple_registers(0, [self.cont_mb, new_mb_data])
+                tray_again = 0
+                
+            time.sleep(0.05)
 
 
     def send_control_signals(self) -> None:
@@ -245,17 +262,13 @@ class EMS():
     
 
 
-    def stop(self) -> None:
-        return self.stop_mpc
-
-
 
     def plot_result(self) -> None:
         time_steps = list(range(self.Datas.NP_3TH))
         
         plt.figure(figsize=(10, 5))
         
-        if (self.operation_mode):
+        if (self.operation_mode == "CONNECTED"):
             print("Plot p_grid")
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_grid_3th'], marker='o', linestyle='-', color='r', label='Grid')
         
@@ -271,7 +284,7 @@ class EMS():
         plt.grid()
 
         plt.figure(figsize=(10, 5))
-        if (not self.operation_mode):
+        if (self.operation_mode == "CONNECTED"):
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'k_pv_3th'], marker='o', linestyle='-', color='r', label='k_pv_3th')
         
         plt.plot(time_steps, self.Datas.R_3th.loc[:, 'soc_bat_3th'], marker='o', linestyle='-', color='b', label='soc_bat')
@@ -290,4 +303,4 @@ if __name__ == "__main__":
 
     EMS_instance = EMS()
     
-    I_3th, R_3th = EMS_instance.run()
+    data_results = EMS_instance.run()

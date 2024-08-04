@@ -17,7 +17,7 @@ class Datas:
         
         # Time constants
         self.NP_2TH = 15 # seconds
-        self.NP_3TH = 24 # minutes
+        self.NP_3TH = 96 # minutes
         self.TS_2TH = 1 # seconds
         self.TS_3TH = 1 # seconds
         self.TS_MEASUREMENT = 1 # seconds
@@ -34,6 +34,8 @@ class Datas:
         self.SOC_BAT_MAX = float(0.95)
         self.P_BAT_MAX = int(200)
         self.P_BAT_MIN = int(- 200)
+        self.P_BAT_VAR_MAX = int(50)
+        self.P_BAT_VAR_MIN = int(50)
         
         self.SOC_SC_MIN = 0.2
         self.SOC_SC_MAX = float(0.95)
@@ -47,6 +49,16 @@ class Datas:
         self.SOC_SC_REF = 0.5
         self.SOC_BAT_REF = 0.8
         self.K_PV_REF_3TH = 1
+        
+        # Weightings for objective function
+        # 3th
+        self.Datas.WEIGHTING_K_PV_3TH = 1
+        self.Datas.WEIGHTING_DELTA_BAT_3TH = 0.45
+        self.Datas.WEIGHTING_SOC_BAT_3TH = 0.45
+        # 2th
+        
+        self.Datas.WEIGHTING_REF_BAT_2TH = 0.45
+        self.Datas.WEIGHTING_SOC_SC_2TH = 0.001
         
         # Measurements
         self.soc_bat = 0.8
@@ -80,11 +92,11 @@ class Datas:
                                    'FO_3th': [0.0]*self.NP_3TH})
         
         # Main
-        self.M_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
-                                   'tariff_pur': [0.5]*self.NP_3TH,
-                                   'tariff_sale': [0.5]*self.NP_3TH,
-                                   'p_load': [0.0]*self.NP_3TH,
-                                   })
+        # self.M_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
+        #                            'tariff_pur': [0.5]*self.NP_3TH,
+        #                            'tariff_sale': [0.5]*self.NP_3TH,
+        #                            'p_load': [0.0]*self.NP_3TH,
+        #                            })
         
         
         ''' ------------------- Matrices for 2th ------------------- '''

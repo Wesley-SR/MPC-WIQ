@@ -45,7 +45,7 @@ if __name__ == '__main__':
             else:
                 pass
                 #print("databank = {}".format(server.data_bank.get_holding_registers(address))) # (databank.get_words(address)))
-                print(".")
+                # print(".")
 
             sleep(0.05)
             cont = cont + 1

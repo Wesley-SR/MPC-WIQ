@@ -25,7 +25,7 @@ if __name__ == '__main__':
     host = 'localhost'
     # host = '127.1.0.0'
     port = 502
-    client_ID = 2
+    client_ID = 1
     
     try:
         client = ModbusClient(host = host, port=port, unit_id = client_ID, debug=False, auto_open=True)
@@ -47,6 +47,7 @@ if __name__ == '__main__':
     p_load = int((medidas_csv.loc[cont_mb, 'p_load'])*1000)
     data_to_write = [new_mb_data, p_pv, p_load]
     print("Send first data: {}  {}  {}".format(data_to_write[0], data_to_write[1], data_to_write[2]))
+    # Write first new data
     client.write_multiple_registers(1, data_to_write)
     
     run = 1
@@ -57,7 +58,7 @@ if __name__ == '__main__':
     while run:
         
         number_of_register_to_read = 9
-        time.sleep(0.001)
+        time.sleep(0.5)
         #try:
         
         registers = client.read_holding_registers(0, 2)

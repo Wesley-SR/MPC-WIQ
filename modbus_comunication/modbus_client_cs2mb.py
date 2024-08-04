@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Esse client código lê os dados de um CSV e escreve na rede Modbus
-# Fonte:
+# Fontes:
     # https://www.youtube.com/watch?v=FYPQgnQE9fk&ab_channel=Johannes4GNU_Linux
     # https://github.com/Johannes4Linux/Simple-ModbusTCP-Server/blob/master/Simple_ModbusServer.py
     # https://pymodbustcp.readthedocs.io/en/latest/examples/server.html?highlight=server
@@ -58,7 +58,8 @@ if __name__ == '__main__':
             else:
                 print('unable to read registers \n')
         else:
-            print(".")
+            pass
+            # print(".")
 
         time.sleep(0.05)
         

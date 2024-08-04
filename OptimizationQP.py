@@ -15,27 +15,17 @@ class OptimizationQP:
 
     def __init__(self, Datas): # With Datas like a enter parameter, we can edit the object EMS's Data
         
-        self.Datas = Datas
-        
-        # Weightings for objective function
-        # 3th
-        self.WEIGHTING_K_PV_3TH = 1
-        self.WEIGHTING_DELTA_BAT_3TH = 0.45
-        # 2th
-        self.WEIGHTING_K_PV_2TH = 0.45
-        self.WEIGHTING_REF_BAT_2TH = 0.45
-        self.WEIGHTING_SOC_SC_2TH = 0.001
-        
+        self.Datas = Datas    
         
         
 
     ''' ------------------------------------------------------------------------------- 
-    Islanded Optimization 3th
+    isolated Optimization 3th
     --------------------------------------------------------------------------------'''
     
-    def islanded_optimization_3th(self):
+    def isolated_optimization_3th(self):
         
-        print("Islanded Optimization in 3th")
+        print("isolated Optimization in 3th")
         
         # Optimization variables
         p_bat   = cp.Variable(self.Datas.NP_3TH)
@@ -43,7 +33,7 @@ class OptimizationQP:
         k_pv    = cp.Variable(self.Datas.NP_3TH)
         
         # Optimization problem
-        objective = cp.Minimize(cp.sum_squares(k_pv[1 : self.Datas.NP_3TH] - self.Datas.K_PV_REF_3TH)*self.WEIGHTING_K_PV_3TH +
+        objective = cp.Minimize(cp.sum_squares(k_pv[1 : self.Datas.NP_3TH] - self.Datas.K_PV_REF_3TH)*self.Datas.WEIGHTING_K_PV_3TH +
                                 cp.sum_squares(p_bat[1 : self.Datas.NP_3TH] - p_bat[0 : self.Datas.NP_3TH - 1]) +
                                 cp.sum_squares(soc_bat[1 : self.Datas.NP_3TH] - self.Datas.SOC_BAT_REF)
                                 )
@@ -158,12 +148,12 @@ class OptimizationQP:
 
 
     ''' ------------------------------------------------------------------------------- 
-    Islanded Optimization 2th
+    isolated Optimization 2th
     --------------------------------------------------------------------------------'''
-    def islanded_optimization_2th(self):
+    def isolated_optimization_2th(self):
         # Simula a otimização secundária
         print("Otimização secundária da classe OptimizationQP...")
-        print("Islanded Optimization in 2th")
+        print("isolated Optimization in 2th")
         
         # Optimization variables
         p_bat = cp.Variable(self.Datas.NP_2TH)
@@ -173,9 +163,9 @@ class OptimizationQP:
         soc_sc = cp.Variable(self.Datas.NP_2TH)
                 
         # Optimization problem
-        objective = cp.Minimize(cp.sum_squares(k_pv - self.Datas.R_3th.loc[k, 'k_pv_3th'])*self.WEIGHTING_K_PV_2TH 
-                                + cp.sum_squares(soc_bat - self.Datas.R_3th.loc[k, 'soc_bat_3th'])*self.WEIGHTING_REF_BAT_2TH
-                                + cp.sum_squares(soc_sc - self.Datas.SOC_SC_REF)*self.WEIGHTING_SOC_SC_2TH
+        objective = cp.Minimize(cp.sum_squares(k_pv - self.Datas.R_3th.loc[k, 'k_pv_3th'])*self.Datas.WEIGHTING_DELTA_BAT_3TH 
+                                + cp.sum_squares(soc_bat - self.Datas.R_3th.loc[k, 'soc_bat_3th'])*self.Datas.WEIGHTING_REF_BAT_2TH
+                                + cp.sum_squares(soc_sc - self.Datas.SOC_SC_REF)*self.Datas.WEIGHTING_SOC_SC_2TH
                                 )
         # TODO: Test wigh battery degradation
         
@@ -231,7 +221,7 @@ class OptimizationQP:
 
 
     ''' ------------------------------------------------------------------------------- 
-    Islanded Optimization 2th
+    isolated Optimization 2th
     --------------------------------------------------------------------------------'''
     def connected_optimization_2th(self):
         # Simula a otimização secundária
