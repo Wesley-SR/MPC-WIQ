@@ -64,7 +64,7 @@ class EMS():
         except Exception as e:
             print("Erros connecting Modbus Client: {}".format(e))
             self.modbus_client.close()
-        self.cont_mb = 0
+        self.counter_mb = 0
 
         # Forecasting models
         self.forecast = ForecastingModel(self.Datas.pv_path, self.Datas.load_path)
@@ -225,8 +225,8 @@ class EMS():
     def get_measurements(self) -> None:
         # Simula a captura de dados
         # TODO: Talvez eu possa criar uma thread para ficar lendo os dados e atualizando
-        tray_again = 1
-        while tray_again:
+        wait_for_new_data = 1
+        while wait_for_new_data:
             registers = self.modbus_client.read_holding_registers(0, 9)
             new_mb_data = int(registers[0])
             if new_mb_data:
@@ -245,10 +245,10 @@ class EMS():
                 self.Datas.soc_bat = registers[8]/1000
                 self.Datas.soc_sc = registers[9]/1000
                 
-                self.cont_mb += 1
+                self.counter_mb += 1
                 new_mb_data = 0
-                self.modbus_client.write_multiple_registers(0, [self.cont_mb, new_mb_data])
-                tray_again = 0
+                self.modbus_client.write_multiple_registers(0, [self.counter_mb, new_mb_data])
+                wait_for_new_data = 0
                 
             time.sleep(0.05)
 

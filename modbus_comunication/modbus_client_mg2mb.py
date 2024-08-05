@@ -34,17 +34,17 @@ if __name__ == '__main__':
         print("Error with host or port params")
     
     Np_2th = 288
-    cont_mb = 0
-    last_cont_mb = 0
+    counter_mb = 0
+    last_counter_mb = 0
     new_mb_data = 0
     run = 0
 
     #try:
     registers = client.read_holding_registers(1, 1)
-    cont_mb = int(registers[0])
+    counter_mb = int(registers[0])
     new_mb_data = 1
-    p_pv = int((medidas_csv.loc[cont_mb, 'p_pv'])*1000)
-    p_load = int((medidas_csv.loc[cont_mb, 'p_load'])*1000)
+    p_pv = int((medidas_csv.loc[counter_mb, 'p_pv'])*1000)
+    p_load = int((medidas_csv.loc[counter_mb, 'p_load'])*1000)
     data_to_write = [new_mb_data, p_pv, p_load]
     print("Send first data: {}  {}  {}".format(data_to_write[0], data_to_write[1], data_to_write[2]))
     # Write first new data
@@ -62,18 +62,18 @@ if __name__ == '__main__':
         #try:
         
         registers = client.read_holding_registers(0, 2)
-        cont_mb = int(registers[0])
+        counter_mb = int(registers[0])
         new_mb_data = int(registers[1])
-        if (cont_mb != last_cont_mb) and (not new_mb_data):                 
-            last_cont_mb = cont_mb
+        if (counter_mb != last_counter_mb) and (not new_mb_data):                 
+            last_counter_mb = counter_mb
             new_mb_data = 1
-            p_pv = int((medidas_csv.loc[cont_mb, 'p_pv'])*1000)
-            p_load = int((medidas_csv.loc[cont_mb, 'p_load'])*1000)
+            p_pv = int((medidas_csv.loc[counter_mb, 'p_pv'])*1000)
+            p_load = int((medidas_csv.loc[counter_mb, 'p_load'])*1000)
             data_to_write = [new_mb_data, p_pv, p_load]
             print("Send data: new_mb_data: {}, p_pv: {}, p_load: {}".format(data_to_write[0], data_to_write[1], data_to_write[2]))
-            client.write_multiple_registers(1, data_to_write) # mg2bm doesn't touch the cont_mb
+            client.write_multiple_registers(1, data_to_write) # mg2bm doesn't touch the counter_mb
             
-           
+            
         
         #except Exception as e:
         #    print("Erro de conexao devido: {}".format(e))
