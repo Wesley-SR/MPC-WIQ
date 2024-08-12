@@ -28,14 +28,20 @@ def df_to_X_y(df, window_size=5):
 # df = pd.read_csv("test_new.csv", index_col='timestamp')
 
 # Get previous data
-# df = pd.read_csv("A-Modelos_Previsao\LSMT\\test_new.csv") # VS code
-df = pd.read_csv("test_load.csv") # Spyder
+# df = pd.read_csv("A-Modelos_Previsao\LSMT\\test_pv.csv") # VS code
+df = pd.read_csv("test_load.csv") # Spyder Load
 
-#df = pd.read_csv("test_new.csv")
-# df.index = pd.to_datetime(df['timestamp'])
+# df = pd.read_csv("test_pv.csv") # Spyder PV
+# df.index = pd.to_datetime(df['timestamp']) # Spyder
 
 # 
-power = df['potencia_load']
+
+
+# power = df['p_pv']
+power = df['p_load']
+
+
+
 WINDOW_SIZE = 5
 start_time = time.time()
 X, y = df_to_X_y(power, WINDOW_SIZE)
@@ -45,10 +51,13 @@ execution_time = end_time - start_time
 print(f"convert_time: {execution_time}")
 
 # Load trained model
+''' PV '''
 # model = load_model('A-Modelos_Previsao/LSMT/PV_model/')  # VS code
-model = load_model('Load_model/') # Spyder
+# model = load_model('PV_model/') # Spyder
 
-
+''' load '''
+# model = load_model('A-Modelos_Previsao/LSMT/PV_model/')  # VS code
+model = load_model('PV_model/') # Spyder
 
 
 
@@ -95,7 +104,7 @@ model = load_model('Load_model/') # Spyder
 #     plt.show()
 
 
-begin = 53
+begin = 96
 day_after = 0
 figures = []  # List to store figure objects
 
@@ -107,12 +116,12 @@ for i in range(10):  # Changed to 10 iterations for the sake of example
     predictions = model.predict(X_test).flatten()
     
     # Create a new figure for each iteration
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=300)  # Aumente o tamanho e a resolução da figura
     figures.append(fig)
     
     # Plot predictions and actual values
-    ax.plot(predictions[:96], label='Predictions')
-    ax.plot(y_test[:96], label='Actuals')
+    ax.plot(predictions[:96], label='Previsto', color='red')
+    ax.plot(y_test[:96], label='Passado', color='orange')
     
     # Add legend
     ax.legend()

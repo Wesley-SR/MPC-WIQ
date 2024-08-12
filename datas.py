@@ -11,6 +11,18 @@ import pandas as pd
 class Datas:
     def __init__(self):
         
+        
+        self.M = pd.read_csv("datas.csv", parse_dates=['time'], index_col='time')
+        
+        # Operation mode
+        # self.operation_mode = "CONNECTED"
+        self.operation_mode = "ISOLATED"
+        
+        # Optmization method
+        # self.optimization_method = "QP"
+        self.optimization_method = "MILP"
+        
+        
         # Paths for files
         self.pv_path = "PV_model"
         self.load_path = "Load_model"
@@ -52,13 +64,12 @@ class Datas:
         
         # Weightings for objective function
         # 3th
-        self.Datas.WEIGHTING_K_PV_3TH = 1
-        self.Datas.WEIGHTING_DELTA_BAT_3TH = 0.45
-        self.Datas.WEIGHTING_SOC_BAT_3TH = 0.45
+        self.WEIGHTING_K_PV_3TH = 1
+        self.WEIGHTING_DELTA_BAT_3TH = 0.45
+        self.WEIGHTING_SOC_BAT_3TH = 0.45
         # 2th
-        
-        self.Datas.WEIGHTING_REF_BAT_2TH = 0.45
-        self.Datas.WEIGHTING_SOC_SC_2TH = 0.001
+        self.WEIGHTING_REF_BAT_2TH = 0.45
+        self.WEIGHTING_SOC_SC_2TH = 0.001
         
         # Measurements
         self.soc_bat = 0.8
@@ -121,5 +132,11 @@ class Datas:
                                    'soc_bat_2th': [0.0]*self.NP_2TH,
                                    'k_pv_2th': [0.0]*self.NP_2TH,
                                    'FO_2th': [0.0]*self.NP_2TH})
+        
+        print("Datas initialized \n")
 
 
+    def update_past_datas(self) -> None:
+        
+        self.P_3th.iloc[0:self.Datas.NP_3TH-1, 'p_pv'] = self.M.iloc[0:self.Datas.NP_3TH-1, 'p_pv']
+        self.P_3th.iloc[0:self.Datas.NP_3TH-1, 'p_load'] = self.M.iloc[0:self.Datas.NP_3TH-1, 'p_load']

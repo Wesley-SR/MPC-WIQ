@@ -11,7 +11,7 @@ import time
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import modbus_comunication.modbus_client_cs2mb
+from pyModbusTCP.client import ModbusClient
 
 # My libs
 from OptimizationQP import OptimizationQP
@@ -25,49 +25,51 @@ from pyModbusTCP.client import ModbusClient
 
 
 
-# =======================================================
+# *******************************************************
 #    # EMC CLASS                                        #
-# =======================================================
+# *******************************************************
 class EMS():
     def __init__(self):
-
+        
+        
+        print("-------------------------")
+        print("Initialization")
         # Create a object of datas
         self.Datas = Datas()
         
         self.run_mpc = True
+        self.run_3th = True
+        self.run_2th = False
         # Last Time
         self.last_time_measurement = 0
         self.last_time_2th = 0
         self.last_time_3th = 0
         
-        # k
-        self.k = 0
-        self.j = 0
+        # Timers
+        self.t = 96 # Time that start in matrix M (in simulation)
+        self.t_runing = 0 # To know when we start
 
-        # Operation mode: CONNECTED or ISOLATED
-        self.operation_mode = "ISOLATED"
-        # Optmization method: QP or MILP
-        self.optimization_method = "MILP"
-        
         # Create object optimization
-        if self.optimization_method == "QP":
+        if self.Datas.optimization_method == "QP":
             self.qp_optimization = OptimizationQP(self.Datas) # With the parameter self.Datas, the OptimizationQP methods can edit it
-        elif self.optimization_method == "MILP":
+        elif self.Datas.optimization_method == "MILP":
             self.milp_optimization = OptimizationMILP(self.Datas)
         
         # Create Modbus object
-        self.host = 'localhost'
-        self.port = 502
-        self.client_ID = 2
-        try:
-            self.modbus_client = ModbusClient(host = self.host, port = self.port, unit_id = self.client_ID, debug=False, auto_open=True)
-        except Exception as e:
-            print("Erros connecting Modbus Client: {}".format(e))
-            self.modbus_client.close()
-        self.counter_mb = 0
+        # self.host = 'localhost'
+        # self.port = 502
+        # self.client_ID = 2
+        # try:
+        #     self.modbus_client = ModbusClient(host = self.host, port = self.port, unit_id = self.client_ID, debug=False, auto_open=True)
+        # except Exception as e:
+        #     print("Erros connecting Modbus Client: {}".format(e))
+        #     self.modbus_client.close()
+        # self.counter_mb = 0
 
         # Forecasting models
         self.forecast = ForecastingModel(self.Datas.pv_path, self.Datas.load_path)
+        
+        print("Initialized EMS")
 
 
 
@@ -80,7 +82,7 @@ class EMS():
         
         while self.run_mpc:
 
-            print("EMS initialized \n")
+            print("run MPC")
 
             # Check if staying in island mode or connected mode
 
@@ -89,7 +91,7 @@ class EMS():
                 self.get_measurements()
 
             # Run terciary optmization
-            if (self.is_it_time_to_run_3th()):
+            if (self.is_it_time_to_run_3th() and self.run_3th):
                 # Update past 3th data
                 self.Datas.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.Datas.P_3th.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
                 self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample with the actual data
@@ -108,7 +110,7 @@ class EMS():
                 self.run_3th_optimization()
 
             # Run 2th optmization
-            if (self.is_it_time_to_run_2th()):
+            if (self.is_it_time_to_run_2th() and self.run_2th):
                 # Update past 2th data
                 self.Datas.P_2th.iloc[0:self.Datas.NP_2TH-1] = self.Datas.P_2th.iloc[1:self.Datas.NP_2TH] # Discart the oldest sample
                 self.Datas.P_2th.at[self.Datas.NP_2TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample
@@ -131,8 +133,9 @@ class EMS():
             self.run_mpc = False # To run only a time
             if not self.run_mpc:
                 break
-            
         
+            self.t = self.t + 1
+            
         self.plot_result()
         return self.Datas
 
@@ -181,17 +184,17 @@ class EMS():
 
     def run_3th_optimization(self) -> None:
         # Call optimization
-        if (self.operation_mode == "CONNECTED"):
-            if (self.optimization_method == "QP"):
+        if (self.Datas.operation_mode == "CONNECTED"):
+            if (self.Datas.optimization_method == "QP"):
                 self.qp_optimization.connected_optimization_3th()
-            elif(self.optimization_method == "MILP"):
+            elif(self.Datas.optimization_method == "MILP"):
                 # self.milp_optimization.connected_optimization_3th()
                 print("Dont have connected MILP")
 
-        elif (self.operation_mode == "ISOLATED"):
-            if (self.optimization_method == "QP"):
+        elif (self.Datas.operation_mode == "ISOLATED"):
+            if (self.Datas.optimization_method == "QP"):
                 self.qp_optimization.isolated_optimization_3th()
-            elif (self.optimization_method == "MILP"):
+            elif (self.Datas.optimization_method == "MILP"):
                 self.milp_optimization.isolated_optimization_3th()
             else:
                 print("Don't have optimization method")
@@ -207,35 +210,38 @@ class EMS():
         self.Datas.I_2th.loc[:, 'load_forecast'] = self.Datas.p_load
         
         # Call optimization
-        if (self.operation_mode == "CONNECTED"):
-            if (self.optimization_method == "QP"):
+        if (self.Datas.operation_mode == "CONNECTED"):
+            if (self.Datas.optimization_method == "QP"):
                 self.qp_optimization.connected_optimization_2th()
-            elif (self.optimization_method == "MILP"):
+            elif (self.Datas.optimization_method == "MILP"):
                 print("TODO: MILP Optimization")
                 pass
-        elif (self.operation_mode == "ISOLATED"):
-            if (self.optimization_method == "QP"):
+        elif (self.Datas.operation_mode == "ISOLATED"):
+            if (self.Datas.optimization_method == "QP"):
                 self.qp_optimization.isolated_optimization_2th()
-            elif (self.optimization_method == "MILP"):
+            elif (self.Datas.optimization_method == "MILP"):
                 print("TODO: MILP Optimization")
                 pass
 
 
     
     def get_measurements(self) -> None:
-        # Simula a captura de dados
-        # TODO: Talvez eu possa criar uma thread para ficar lendo os dados e atualizando
+        
+        
+        # ---------------------------------------------------------------------------------
+        #                             WITH MODBUS
+        # ---------------------------------------------------------------------------------
         wait_for_new_data = 1
         while wait_for_new_data:
             registers = self.modbus_client.read_holding_registers(0, 9)
-            new_mb_data = int(registers[0])
+            new_mb_data = int(registers[1])
             if new_mb_data:
             # Operation mode
             
                 if (registers[2] == 1):
-                    self.operation_mode = "CONNECTED"
+                    self.Datas.operation_mode = "CONNECTED"
                 else:
-                    self.operation_mode = "ISOLATED"
+                    self.Datas.operation_mode = "ISOLATED"
                 
                 self.Datas.p_pv = registers[3]/1000
                 self.Datas.p_load = registers[4]/1000
@@ -245,12 +251,24 @@ class EMS():
                 self.Datas.soc_bat = registers[8]/1000
                 self.Datas.soc_sc = registers[9]/1000
                 
+                print("Measurements \n")
+                print(f'new_mb_data:    {new_mb_data} \n')
+                print(f'operation_mode: {self.Datas.operation_mode} \n')
+                print(f'p_pv:           {self.Datas.p_pv} \n')
+                print(f'p_load:         {self.Datas.p_load} \n')
+                print(f'p_grid:         {self.Datas.p_grid} \n')
+                print(f'p_bat:          {self.Datas.p_bat} \n')
+                print(f'p_sc:           {self.Datas.p_sc} \n')
+                print(f'soc_bat:        {self.Datas.soc_bat} \n')
+                print(f'soc_sc:         {self.Datas.soc_sc} \n\n')
+                
                 self.counter_mb += 1
                 new_mb_data = 0
                 self.modbus_client.write_multiple_registers(0, [self.counter_mb, new_mb_data])
                 wait_for_new_data = 0
                 
             time.sleep(0.05)
+        
 
 
     def send_control_signals(self) -> None:
@@ -258,7 +276,7 @@ class EMS():
                            self.Datas.R_2th.loc['p_sc_2th', 0],
                            self.Datas.R_2th.loc['p_grid_2th', 0],
                            self.Datas.R_2th.loc['k_pv', 0]]
-        self.modbus_client.write_multiple_registers(10, control_signals)
+        # self.modbus_client.write_multiple_registers(10, control_signals)
     
 
 
@@ -268,7 +286,7 @@ class EMS():
         
         plt.figure(figsize=(10, 5))
         
-        if (self.operation_mode == "CONNECTED"):
+        if (self.Datas.operation_mode == "CONNECTED"):
             print("Plot p_grid")
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_grid_3th'], marker='o', linestyle='-', color='r', label='Grid')
         
@@ -284,7 +302,7 @@ class EMS():
         plt.grid()
 
         plt.figure(figsize=(10, 5))
-        if (self.operation_mode == "CONNECTED"):
+        if (self.Datas.operation_mode == "CONNECTED"):
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'k_pv_3th'], marker='o', linestyle='-', color='r', label='k_pv_3th')
         
         plt.plot(time_steps, self.Datas.R_3th.loc[:, 'soc_bat_3th'], marker='o', linestyle='-', color='b', label='soc_bat')

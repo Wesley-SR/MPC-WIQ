@@ -8,7 +8,6 @@ Created on 20240728
 import pandas as pd
 import numpy as np
 from tensorflow.keras.models import load_model
-from tensorflow.keras.models import PV_model
 import matplotlib.pyplot as plt
 import time
 
@@ -28,8 +27,11 @@ def df_to_array(df, window_size=5):
 
 class ForecastingModel:
     def __init__(self, path_pv, path_load):
-        self.load_model = load_model(f'/{path_pv}')
-        self.pv_model = load_model(f'/{path_load}')
+        
+        self.pv_model = load_model(f'{path_load}/')
+        self.load_model = load_model(f'{path_pv}/')
+        
+        print("Initialized forecast models \n")
         
     def predict_pv(self, past):
         x = df_to_array(past)

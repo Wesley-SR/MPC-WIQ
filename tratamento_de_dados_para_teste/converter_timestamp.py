@@ -11,10 +11,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Intervalo de amostragem desejado em segundos
-ts_segundos_desejado = 3*60
+ts_segundos_desejado = 15*60
 
 # Nome para arquivos e caminho
-arquivo = "load_5_min_a_day"
+arquivo = "datas"
 novo_arquivo = "load_{}_sec".format(ts_segundos_desejado)
 caminho = ""  # Por a barra "/" no caminho
 
