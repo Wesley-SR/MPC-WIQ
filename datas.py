@@ -29,7 +29,7 @@ class Datas:
         
         # Time constants
         self.NP_2TH = 15 # seconds
-        self.NP_3TH = 96 # minutes
+        self.NP_3TH = 95 # minutes
         self.TS_2TH = 1 # seconds
         self.TS_3TH = 1 # seconds
         self.TS_MEASUREMENT = 1 # seconds

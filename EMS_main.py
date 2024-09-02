@@ -26,7 +26,7 @@ from pyModbusTCP.client import ModbusClient
 
 
 # *******************************************************
-#    # EMC CLASS                                        #
+#      EMC CLASS                                        #
 # *******************************************************
 class EMS():
     def __init__(self):
@@ -37,34 +37,35 @@ class EMS():
         # Create a object of datas
         self.Datas = Datas()
         
+        # Execution variables
         self.run_mpc = True
         self.run_3th = True
         self.run_2th = False
-        # Last Time
-        self.last_time_measurement = 0
-        self.last_time_2th = 0
-        self.last_time_3th = 0
         
         # Timers
         self.t = 96 # Time that start in matrix M (in simulation)
         self.t_runing = 0 # To know when we start
+        # Last Timers
+        self.last_time_measurement = 0
+        self.last_time_2th = 0
+        self.last_time_3th = 0
 
-        # Create object optimization
+        # Create optimization object
         if self.Datas.optimization_method == "QP":
             self.qp_optimization = OptimizationQP(self.Datas) # With the parameter self.Datas, the OptimizationQP methods can edit it
         elif self.Datas.optimization_method == "MILP":
             self.milp_optimization = OptimizationMILP(self.Datas)
         
         # Create Modbus object
-        # self.host = 'localhost'
-        # self.port = 502
-        # self.client_ID = 2
-        # try:
-        #     self.modbus_client = ModbusClient(host = self.host, port = self.port, unit_id = self.client_ID, debug=False, auto_open=True)
-        # except Exception as e:
-        #     print("Erros connecting Modbus Client: {}".format(e))
-        #     self.modbus_client.close()
-        # self.counter_mb = 0
+        self.host = 'localhost'
+        self.port = 502
+        self.client_ID = 2
+        try:
+            self.modbus_client = ModbusClient(host = self.host, port = self.port, unit_id = self.client_ID, debug=False, auto_open=True)
+        except Exception as e:
+            print("Erros connecting Modbus Client: {}".format(e))
+            self.modbus_client.close()
+        self.counter_mb = 0
 
         # Forecasting models
         self.forecast = ForecastingModel(self.Datas.pv_path, self.Datas.load_path)
@@ -76,15 +77,15 @@ class EMS():
 
 
     # =======================================================
-    #    # Main loop of MPC                                 #
+    #      Main loop of MPC                                 #
     # =======================================================
     def run(self) -> None:
         
+        print("Run MPC")
+        
         while self.run_mpc:
 
-            print("run MPC")
-
-            # Check if staying in island mode or connected mode
+            print(f"t = {self.t}")    
 
             # Take measurements
             if (self.is_it_time_to_take_measurements()):
@@ -92,10 +93,14 @@ class EMS():
 
             # Run terciary optmization
             if (self.is_it_time_to_run_3th() and self.run_3th):
+                print("Update 3th data")
                 # Update past 3th data
                 self.Datas.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.Datas.P_3th.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
                 self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample with the actual data
                 self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_load'] = self.Datas.p_load # Update the new load sample with the actual data
+                
+                print(f"p_pv mensuremented: {self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_pv']}")
+                print(f"p_load mensuremented: {self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_load']}")
                 
                 # Update the first row of the I_3th matrix
                 ## The first row of the I_3th matrix is a measurement.
@@ -183,6 +188,7 @@ class EMS():
 
 
     def run_3th_optimization(self) -> None:
+        print("run_3th_optimization")
         # Call optimization
         if (self.Datas.operation_mode == "CONNECTED"):
             if (self.Datas.optimization_method == "QP"):
@@ -226,33 +232,38 @@ class EMS():
 
     
     def get_measurements(self) -> None:
-        
-        
-        # ---------------------------------------------------------------------------------
-        #                             WITH MODBUS
-        # ---------------------------------------------------------------------------------
+        print("get_measurements")
         wait_for_new_data = 1
-        while wait_for_new_data:
+        
+        cmd_to_send_new_data = 1
+        self.modbus_client.write_multiple_registers(0, [self.counter_mb, cmd_to_send_new_data])
+        time.sleep(0.100)
+        
+        while wait_for_new_data == 0:
+            print("Waiting for datas")
             registers = self.modbus_client.read_holding_registers(0, 9)
-            new_mb_data = int(registers[1])
-            if new_mb_data:
-            # Operation mode
             
+            # Check if we have new data
+            cmd_to_send_new_data = int(registers[1])
+            if cmd_to_send_new_data == 1:
+                
+                # Operation mode
                 if (registers[2] == 1):
                     self.Datas.operation_mode = "CONNECTED"
                 else:
                     self.Datas.operation_mode = "ISOLATED"
                 
-                self.Datas.p_pv = registers[3]/1000
-                self.Datas.p_load = registers[4]/1000
-                self.Datas.p_grid = registers[5]/1000
-                self.Datas.p_bat = registers[6]/1000
-                self.Datas.p_sc = registers[7]/1000
-                self.Datas.soc_bat = registers[8]/1000
-                self.Datas.soc_sc = registers[9]/1000
+                # Datas from microgrid
+                self.Datas.p_pv         = registers[3]/1000
+                self.Datas.p_load       = registers[4]/1000
+                self.Datas.p_grid       = registers[5]/1000
+                self.Datas.p_bat        = registers[6]/1000
+                self.Datas.p_sc         = registers[7]/1000
+                self.Datas.soc_bat      = registers[8]/1000
+                self.Datas.soc_sc       = registers[9]/1000
                 
                 print("Measurements \n")
-                print(f'new_mb_data:    {new_mb_data} \n')
+                print(f'cmd_to_send_new_data:    {cmd_to_send_new_data} \n')
                 print(f'operation_mode: {self.Datas.operation_mode} \n')
                 print(f'p_pv:           {self.Datas.p_pv} \n')
                 print(f'p_load:         {self.Datas.p_load} \n')
@@ -263,11 +274,9 @@ class EMS():
                 print(f'soc_sc:         {self.Datas.soc_sc} \n\n')
                 
                 self.counter_mb += 1
-                new_mb_data = 0
-                self.modbus_client.write_multiple_registers(0, [self.counter_mb, new_mb_data])
                 wait_for_new_data = 0
                 
-            time.sleep(0.05)
+            time.sleep(0.5)
         
 
 
