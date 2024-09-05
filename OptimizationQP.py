@@ -33,9 +33,9 @@ class OptimizationQP:
         k_pv    = cp.Variable(self.Datas.NP_3TH)
         
         # Optimization problem
-        objective = cp.Minimize(cp.sum_squares(k_pv[1 : self.Datas.NP_3TH] - self.Datas.K_PV_REF_3TH)*self.Datas.WEIGHTING_K_PV_3TH +
-                                cp.sum_squares(p_bat[1 : self.Datas.NP_3TH] - p_bat[0 : self.Datas.NP_3TH - 1]) +
-                                cp.sum_squares(soc_bat[1 : self.Datas.NP_3TH] - self.Datas.SOC_BAT_REF)
+        objective = cp.Minimize(cp.sum_squares(k_pv[1:self.Datas.NP_3TH] - self.Datas.K_PV_REF_3TH)*self.Datas.WEIGHT_K_PV_3TH +
+                                cp.sum_squares(p_bat[1:self.Datas.NP_3TH] - p_bat[0:self.Datas.NP_3TH - 1]) +
+                                cp.sum_squares(soc_bat[1:self.Datas.NP_3TH] - self.Datas.SOC_BAT_REF)
                                 )
         constraints = []
         
@@ -83,21 +83,18 @@ class OptimizationQP:
     def connected_optimization_3th(self):
         
         # Optimization variables
-        p_bat_ch = cp.Variable(self.Datas.NP_3TH)
-        p_bat_dis = cp.Variable(self.Datas.NP_3TH)     
+        p_bat = cp.Variable(self.Datas.NP_3TH) 
         soc_bat = cp.Variable(self.Datas.NP_3TH)
-        p_sale = cp.Variable(self.Datas.NP_3TH)
-        p_pur = cp.Variable(self.Datas.NP_3TH)
+        p_grid = cp.Variable(self.Datas.NP_3TH)
 
         switching_bat = cp.Variable(self.Datas.NP_3TH, boolean=False)
         switching_grid = cp.Variable(self.Datas.NP_3TH, boolean=False)
 
 
-
         # Optimization problem
-        objective = cp.Minimize(cp.sum(cp.multiply(p_sale, self.Datas.I_3th['tariff_sale'].values)
-                                + self.Datas.CC_BAT/(2*self.Datas.N_BAT)*self.Datas.TS_3TH*(p_bat_ch + p_bat_ch)
-                                + self.Datas.COST_DEGR_BAT*(p_bat_ch + p_bat_dis)))
+        objective = cp.Minimize(cp.sum_squares(p_grid[0:self.Datas.NP_3TH] - self.Datas.P_GRID_MAX)
+                                + cp.sum_squares(p_bat[1:self.Datas.NP_3TH] - p_bat[0:self.Datas.NP_3TH - 1])
+                                + cp.sum_squares(soc_bat[1:self.Datas.NP_3TH] - self.Datas.SOC_BAT_REF))
         constraints = []
 
         # MPC for K = 0
@@ -105,29 +102,28 @@ class OptimizationQP:
         constraints.append(soc_bat[k] == self.Datas.soc_bat)
 
         # MPC LOOP
-        for k in range(1, self.Datas.NP_3TH):
+        for k in range(0, self.Datas.NP_3TH):
 
             # Power balance
-            constraints.append(self.Datas.I_3th.loc[k, 'pv_forecast'] + p_bat_ch[k] + p_pur[k] + self.Datas.I_3th.loc[k, 'load_forecast'] == 
-                               p_bat_dis[k] + p_sale[k])
+            constraints.append(self.Datas.I_3th.loc[k, 'pv_forecast'] + self.Datas.I_3th.loc[k, 'load_forecast']
+                               + p_bat[k] + p_grid[k] == 0)
             
             # Battery SOC
-            constraints.append(soc_bat[k] == soc_bat[k-1] + (p_bat_dis[k-1] - p_bat_ch[k-1])*self.Datas.TS_3TH/self.Datas.Q_BAT)
-
+            if k == 0:
+                constraints.append(soc_bat[k] == self.Datas.soc_bat - (p_bat[k-1])*self.Datas.TS_3TH/self.Datas.Q_BAT)
+            else:
+                constraints.append(soc_bat[k] == soc_bat[k-1] - (p_bat[k-1])*self.Datas.TS_3TH/self.Datas.Q_BAT)
+            
             # Technical constrains
             # GRID
-            constraints.append(p_pur[k] >= 0)
-            constraints.append(p_pur[k] <= (1-switching_grid[k])*self.Datas.P_GRID_MAX)
-            constraints.append(p_sale[k] >= 0)
-            constraints.append(p_sale[k] <= switching_grid[k]*self.Datas.P_GRID_MAX)
+            constraints.append(p_grid[k] <= self.Datas.P_GRID_MAX)
+            constraints.append(p_grid[k] >= self.Datas.P_GRID_MIN)
             
             # BAT
             constraints.append(soc_bat[k] >= self.Datas.SOC_BAT_MIN)
             constraints.append(soc_bat[k] <= self.Datas.SOC_BAT_MAX)
-            constraints.append(p_bat_ch[k] >= 0)
-            constraints.append(p_bat_ch[k] <= (1-switching_bat[k])*self.Datas.P_BAT_MAX)
-            constraints.append(p_bat_dis[k] >= 0)
-            constraints.append(p_bat_dis[k] <= switching_bat[k]*self.Datas.P_BAT_MAX)
+            constraints.append(p_bat[k] >= self.Datas.P_BAT_MIN)
+            constraints.append(p_bat[k] <= self.Datas.P_BAT_MAX)
             
 
         # SOLVER
@@ -136,8 +132,8 @@ class OptimizationQP:
         
         # Optimization Result
         for k in range(0, self.Datas.NP_3TH):
-            self.Datas.R_3th.loc[k, 'p_bat_3th'] = p_bat_dis.value[k] - p_bat_ch.value[k]
-            self.Datas.R_3th.loc[k, 'p_grid_3th'] = p_sale.value[k] - p_pur.value[k]
+            self.Datas.R_3th.loc[k, 'p_bat_3th'] = p_bat.value[k]
+            self.Datas.R_3th.loc[k, 'p_grid_3th'] = p_grid.value[k]
             self.Datas.R_3th.loc[k, 'soc_bat_3th'] = soc_bat.value[k]
             self.Datas.R_3th.loc[k, 'k_pv_3th'] = 0
         
@@ -163,11 +159,10 @@ class OptimizationQP:
         soc_sc = cp.Variable(self.Datas.NP_2TH)
                 
         # Optimization problem
-        objective = cp.Minimize(cp.sum_squares(k_pv - self.Datas.R_3th.loc[k, 'k_pv_3th'])*self.Datas.WEIGHTING_DELTA_BAT_3TH 
-                                + cp.sum_squares(soc_bat - self.Datas.R_3th.loc[k, 'soc_bat_3th'])*self.Datas.WEIGHTING_REF_BAT_2TH
-                                + cp.sum_squares(soc_sc - self.Datas.SOC_SC_REF)*self.Datas.WEIGHTING_SOC_SC_2TH
+        objective = cp.Minimize(cp.sum_squares(k_pv - self.Datas.R_3th.loc[k, 'k_pv_3th'])*self.Datas.WEIGHT_DELTA_BAT_3TH 
+                                + cp.sum_squares(soc_bat - self.Datas.R_3th.loc[k, 'soc_bat_3th'])*self.Datas.WEIGHT_REF_BAT_2TH
+                                + cp.sum_squares(soc_sc - self.Datas.SOC_SC_REF)*self.Datas.WEIGHT_SOC_SC_2TH
                                 )
-        # TODO: Test wigh battery degradation
         
         constraints = []
         

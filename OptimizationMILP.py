@@ -74,10 +74,10 @@ class OptimizationMILP:
         
         # Divide por 2, porque é o mesmo peso para duas parcelas diferentes
         # TODO: Dividir pelo máximo da parcela (Deve passar por normalização)
-        objective_function = ( (self.Datas.WEIGHTING_K_PV_3TH      * J_pv_3th          / 1)
-                             + (self.Datas.WEIGHTING_DELTA_BAT_3TH * J_bat_3th_var_ch  / 2)
-                             + (self.Datas.WEIGHTING_DELTA_BAT_3TH * J_bat_3th_var_dis / 2)
-                             + (self.Datas.WEIGHTING_SOC_BAT_3TH   * J_bat_3th_var_soc / 1)
+        objective_function = ( (self.Datas.WEIGHT_K_PV_3TH      * J_pv_3th          / 1)
+                             + (self.Datas.WEIGHT_DELTA_BAT_3TH * J_bat_3th_var_ch  / 2)
+                             + (self.Datas.WEIGHT_DELTA_BAT_3TH * J_bat_3th_var_dis / 2)
+                             + (self.Datas.WEIGHT_SOC_BAT_3TH   * J_bat_3th_var_soc / 1)
                              )
         prob.setObjective(objective_function)
         

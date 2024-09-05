@@ -45,31 +45,31 @@ class Datas:
         self.SOC_BAT_MIN = 0.2
         self.SOC_BAT_MAX = float(0.95)
         self.P_BAT_MAX = int(200)
-        self.P_BAT_MIN = int(- 200)
+        self.P_BAT_MIN = int(-200)
         self.P_BAT_VAR_MAX = int(50)
         self.P_BAT_VAR_MIN = int(50)
         
         self.SOC_SC_MIN = 0.2
         self.SOC_SC_MAX = float(0.95)
         self.P_SC_MAX = int(200)
-        self.P_SC_MIN = int(- 200)
+        self.P_SC_MIN = int(-200)
         
         self.P_GRID_MAX = int(150)
-        self.P_GRID_MIN = int(- 150)
+        self.P_GRID_MIN = int(-150)
         
         # Optimization constants
         self.SOC_SC_REF = 0.5
         self.SOC_BAT_REF = 0.8
         self.K_PV_REF_3TH = 1
         
-        # Weightings for objective function
+        # WEIGHTs for objective function
         # 3th
-        self.WEIGHTING_K_PV_3TH = 1
-        self.WEIGHTING_DELTA_BAT_3TH = 0.45
-        self.WEIGHTING_SOC_BAT_3TH = 0.45
+        self.WEIGHT_K_PV_3TH = 1
+        self.WEIGHT_DELTA_BAT_3TH = 0.45
+        self.WEIGHT_SOC_BAT_3TH = 0.45
         # 2th
-        self.WEIGHTING_REF_BAT_2TH = 0.45
-        self.WEIGHTING_SOC_SC_2TH = 0.001
+        self.WEIGHT_REF_BAT_2TH = 0.45
+        self.WEIGHT_SOC_SC_2TH = 0.001
         
         # Measurements
         self.soc_bat = 0.8
