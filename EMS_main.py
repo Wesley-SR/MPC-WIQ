@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from pyModbusTCP.client import ModbusClient
 
 # My libs
-from OptimizationQP import OptimizationQP
+from OptimizationMIQP import OptimizationMIQP
 from OptimizationMILP import OptimizationMILP
 from datas import Datas
 from ForecastingModel import ForecastingModel
@@ -52,7 +52,7 @@ class EMS():
 
         # Create optimization object
         if self.Datas.optimization_method == "QP":
-            self.qp_optimization = OptimizationQP(self.Datas) # With the parameter self.Datas, the OptimizationQP methods can edit it
+            self.qp_optimization = OptimizationMIQP(self.Datas) # With the parameter self.Datas, the OptimizationMIQP methods can edit it
         elif self.Datas.optimization_method == "MILP":
             self.milp_optimization = OptimizationMILP(self.Datas)
         

@@ -21,7 +21,7 @@ class OptimizationMILP:
         print("isolated Optimization in 3th")
         
         ''' -------------------- Optimization Problem ---------------------------- '''
-        prob = pl.LpProblem("otimizacao_online_V2G", pl.LpMinimize) # LpMinimize e LpMaximize
+        prob = pl.LpProblem("OptimizationMILP", pl.LpMinimize) # LpMinimize e LpMaximize
         solver = pl.PULP_CBC_CMD(msg=False, timeLimit=60*1)
         # Solver Disponívels (gratuitos)
         # ['PULP_CBC_CMD', 'SCIP_CMD']
@@ -72,7 +72,7 @@ class OptimizationMILP:
         
         J_bat_3th_var_soc = pl.lpSum([(A_bat_a_3th_soc[k] + A_bat_b_3th_soc[k])] for k in range(self.Datas.NP_3TH))
         
-        # Divide por 2, porque é o mesmo peso para duas parcelas diferentes
+        # Divide por 2 porque porque porque sao duas parcelas referente a mesma coisa
         # TODO: Dividir pelo máximo da parcela (Deve passar por normalização)
         objective_function = ( (self.Datas.WEIGHT_K_PV_3TH      * J_pv_3th          / 1)
                              + (self.Datas.WEIGHT_DELTA_BAT_3TH * J_bat_3th_var_ch  / 2)
@@ -85,7 +85,9 @@ class OptimizationMILP:
         
         ''' --------------------------- RESTRIÇÕES -------------------------------- '''
         '''
-            No código, k = o, é o mesmo que X(t+k|t) para k = 1, do texto.
+            No código, k = 0, é o mesmo que X(t+k|t) para k = 1, do texto.
+            
+            k=0 é o atual
         '''  
         for k in range(0, self.Datas.NP_3TH):
             
@@ -98,7 +100,7 @@ class OptimizationMILP:
             # Absolute value for battery power charge variation
             if k > 0:
                 prob += A_bat_a_3th_var_ch[k] - A_bat_b_3th_var_ch[k] == p_bat_3th_ch[k] - p_bat_3th_ch[k-1]
-            else:
+            else: # k = 0
                 if self.Datas.p_bat >= 0:
                     prob += A_bat_a_3th_var_ch[k] - A_bat_b_3th_var_ch[k] == p_bat_3th_ch[k] - 0
                 else:

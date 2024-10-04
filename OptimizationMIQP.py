@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import time
 
-class OptimizationQP:
+class OptimizationMIQP:
 
     def __init__(self, Datas): # With Datas like a enter parameter, we can edit the object EMS's Data
         
@@ -29,10 +29,15 @@ class OptimizationQP:
         
         # Optimization variables
         p_bat   = cp.Variable(self.Datas.NP_3TH)
+        p_bat_dis = cp.Variable(self.Datas.NP_3TH)
+        p_bat_ch = cp.Variable(self.Datas.NP_3TH)
+        flag_p_bat_dis = cp.Variable(self.Datas.NP_3TH, boolean = True)
+        flag_p_bat_ch = cp.Variable(self.Datas.NP_3TH, boolean = True)
         soc_bat = cp.Variable(self.Datas.NP_3TH)
         k_pv    = cp.Variable(self.Datas.NP_3TH)
         
-        # Optimization problem
+        
+        # Objective function
         objective = cp.Minimize(cp.sum_squares(k_pv[1:self.Datas.NP_3TH] - self.Datas.K_PV_REF_3TH)*self.Datas.WEIGHT_K_PV_3TH +
                                 cp.sum_squares(p_bat[1:self.Datas.NP_3TH] - p_bat[0:self.Datas.NP_3TH - 1]) +
                                 cp.sum_squares(soc_bat[1:self.Datas.NP_3TH] - self.Datas.SOC_BAT_REF)
@@ -41,10 +46,9 @@ class OptimizationQP:
         
         # MPC LOOP
         for k in range(0, self.Datas.NP_3TH):
-
+            
             # Power balance
-            constraints.append(self.Datas.I_3th.loc[k, 'pv_forecast'] + p_bat[k] + self.Datas.I_3th.loc[k, 'load_forecast'] == 0)
-            # TODO: Insert variable k_pv
+            constraints.append(p_bat[k] + k_pv[k]*self.Datas.I_3th.loc[k, 'pv_forecast'] - self.Datas.I_3th.loc[k, 'load_forecast'] == 0)
 
             # Battery SOC
             if k == 0:
@@ -53,10 +57,19 @@ class OptimizationQP:
                 constraints.append(soc_bat[k] == soc_bat[k-1] - p_bat[k-1]*self.Datas.TS_3TH/self.Datas.Q_BAT)
             
             # Technical constrains
+            # SOC bat
             constraints.append(soc_bat[k] >= self.Datas.SOC_BAT_MIN)
             constraints.append(soc_bat[k] <= self.Datas.SOC_BAT_MAX)
-            constraints.append(p_bat[k] >= self.Datas.P_BAT_MIN)
+            # P_bat
+            constraints.append(p_bat_ch[k] >= 0)
+            constraints.append(p_bat_ch[k] <= self.Datas.P_BAT_MAX)
+            constraints.append(p_bat_dis[k] >= 0)
+            constraints.append(p_bat_dis[k] <= self.Datas.P_BAT_MAX)
+            
+            constraints.append(p_bat[k] >= - self.Datas.P_BAT_MAX)
             constraints.append(p_bat[k] <= self.Datas.P_BAT_MAX)
+            constraints.append(p_bat[k] == p_bat_dis[k] - p_bat_ch[k])
+            # k_pv
             constraints.append(k_pv[k] >= 0)
             constraints.append(k_pv[k] <= 1)
 
@@ -148,7 +161,7 @@ class OptimizationQP:
     --------------------------------------------------------------------------------'''
     def isolated_optimization_2th(self):
         # Simula a otimização secundária
-        print("Otimização secundária da classe OptimizationQP...")
+        print("Otimização secundária da classe OptimizationMIQP...")
         print("isolated Optimization in 2th")
         
         # Optimization variables
@@ -220,5 +233,5 @@ class OptimizationQP:
     --------------------------------------------------------------------------------'''
     def connected_optimization_2th(self):
         # Simula a otimização secundária
-        print("Otimização secundária da classe OptimizationQP...")
+        print("Otimização secundária da classe OptimizationMIQP...")
         return [[10, 20], [30, 40], [50, 60]]

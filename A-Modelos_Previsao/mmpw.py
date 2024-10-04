@@ -55,11 +55,11 @@ def mmpw(P, Np):
 if __name__ == "__main__":
     # Carregar os dados
     wights = pd.DataFrame({'wights': [3, 2]})
-    datas = pd.read_csv("Dados_PV_15_min_1ano.csv")
+    datas = pd.read_csv(".\A-Modelos_Previsao\Dados_PV_15_min_1ano.csv")
 
     # Definir o intervalo de amostras
     Np = 96
-    beginning = 0
+    beginning = 150
     past = datas.iloc[beginning:beginning+Np]
     
     real_future = datas.iloc[beginning+Np:beginning+Np+Np]
