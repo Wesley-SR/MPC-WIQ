@@ -22,6 +22,8 @@ from ForecastingModel import ForecastingModel
 # Modbus
 from pyModbusTCP.client import ModbusClient
 
+import mmpw
+
 
 
 
@@ -44,7 +46,6 @@ class EMS():
         
         # Timers
         self.t = 96 # Time that start in matrix M (in simulation)
-        self.t_runing = 0 # To know when we start
         # Last Timers
         self.last_time_measurement = 0
         self.last_time_2th = 0
@@ -52,7 +53,7 @@ class EMS():
 
         # Create optimization object
         if self.Datas.optimization_method == "QP":
-            self.qp_optimization = OptimizationMIQP(self.Datas) # With the parameter self.Datas, the OptimizationMIQP methods can edit it
+            self.qp_optimization = OptimizationMIQP(self.Datas) # With the parameter self.Datas, the OptimizationMIQP methods can edit the object Data
         elif self.Datas.optimization_method == "MILP":
             self.milp_optimization = OptimizationMILP(self.Datas)
         
@@ -68,7 +69,7 @@ class EMS():
         self.counter_mb = 0
 
         # Forecasting models
-        self.forecast = ForecastingModel(self.Datas.pv_path, self.Datas.load_path)
+        # self.forecast = ForecastingModel(self.Datas.pv_path, self.Datas.load_path)
         
         print("Initialized EMS")
 
@@ -108,8 +109,10 @@ class EMS():
                 self.Datas.I_3th.loc[0, 'load_forecast'] = self.Datas.p_load
 
                 # Run 3th forecast
-                self.Datas.I_3th.loc[1:, 'pv_forecast'] = self.forecast.predict_pv(self.Datas.P_3th[:, 'p_pv'])
-                self.Datas.I_3th.loc[1:, 'load_forecast'] = self.forecast.predict_load(self.Datas.P_3th[:, 'p_load'])
+                # self.Datas.I_3th.loc[1:, 'pv_forecast']   = self.forecast.predict_pv(self.Datas.P_3th[:, 'p_pv'])
+                # self.Datas.I_3th.loc[1:, 'load_forecast'] = self.forecast.predict_load(self.Datas.P_3th[:, 'p_load'])
+                self.Datas.I_3th.loc[1:, 'pv_forecast']   = mmpw(self.Datas.P_3th[:,'p_pv'])
+                self.Datas.I_3th.loc[1:, 'load_forecast'] = mmpw(self.Datas.P_3th[:,'p_load'])
                 
                 # Run optmization 3th
                 self.run_3th_optimization()

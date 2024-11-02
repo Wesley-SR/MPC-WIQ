@@ -15,7 +15,7 @@ class OptimizationMIQP:
 
     def __init__(self, Datas): # With Datas like a enter parameter, we can edit the object EMS's Data
         
-        self.Datas = Datas    
+        self.Datas = Datas
         
         
 
@@ -28,12 +28,14 @@ class OptimizationMIQP:
         print("isolated Optimization in 3th")
         
         # Optimization variables
+        # Bat
         p_bat   = cp.Variable(self.Datas.NP_3TH)
         p_bat_dis = cp.Variable(self.Datas.NP_3TH)
         p_bat_ch = cp.Variable(self.Datas.NP_3TH)
         flag_p_bat_dis = cp.Variable(self.Datas.NP_3TH, boolean = True)
         flag_p_bat_ch = cp.Variable(self.Datas.NP_3TH, boolean = True)
         soc_bat = cp.Variable(self.Datas.NP_3TH)
+        # PV
         k_pv    = cp.Variable(self.Datas.NP_3TH)
         
         
@@ -62,13 +64,14 @@ class OptimizationMIQP:
             constraints.append(soc_bat[k] <= self.Datas.SOC_BAT_MAX)
             # P_bat
             constraints.append(p_bat_ch[k] >= 0)
-            constraints.append(p_bat_ch[k] <= self.Datas.P_BAT_MAX)
+            constraints.append(p_bat_ch[k]*flag_p_bat_ch[k] <= self.Datas.P_BAT_MAX)
             constraints.append(p_bat_dis[k] >= 0)
-            constraints.append(p_bat_dis[k] <= self.Datas.P_BAT_MAX)
-            
+            constraints.append(p_bat_dis[k]*flag_p_bat_dis[k] <= self.Datas.P_BAT_MAX)
             constraints.append(p_bat[k] >= - self.Datas.P_BAT_MAX)
             constraints.append(p_bat[k] <= self.Datas.P_BAT_MAX)
             constraints.append(p_bat[k] == p_bat_dis[k] - p_bat_ch[k])
+            constraints.append(flag_p_bat_ch[k] + flag_p_bat_dis[k] <= 1)
+            
             # k_pv
             constraints.append(k_pv[k] >= 0)
             constraints.append(k_pv[k] <= 1)

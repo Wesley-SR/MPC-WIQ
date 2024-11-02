@@ -32,7 +32,7 @@ def run_forecast_mm(P, Np):
     
     
     ''' WRITE RESULTS IN SCV'''
-    forecast = pd.DataFrame(future_data, columns = ['PV_previsao'])
+    forecast = pd.DataFrame(future_data, columns = ['predict'])
     # p_rede_df.to_csv("online_forecast_pv.csv", index=False)
     
     return forecast
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     plt.figure(figsize=(10, 5))
     plt.subplot(2, 1, 1)  # Subplot for to_test_1 and forecasted_1
     plt.plot(to_test_1['potencia_PV'], label='Dados de entrada 1')
-    plt.plot(forecasted_1['PV_previsao'], label='Previsão 1')
+    plt.plot(forecasted_1['predict'], label='Previsão 1')
     plt.plot(real_obscuro_1['potencia_PV'], label='Obscuro 1')
 
     # Adding labels and title for subplot 1
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # Plotting to_test_2 and forecasted_2
     plt.subplot(2, 1, 2)  # Subplot for to_test_2 and forecasted_2
     plt.plot(to_test_2['potencia_PV'], label='Dados de entrada 2')
-    plt.plot(forecasted_2['PV_previsao'], label='Previsão 2')
+    plt.plot(forecasted_2['predict'], label='Previsão 2')
     plt.plot(real_obscuro_2['potencia_PV'], label='Obscuro 2')
 
     # Adding labels and title for subplot 2
