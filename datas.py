@@ -6,79 +6,78 @@ Created on 20230902
 """
 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 class Datas:
     def __init__(self):
         
-        
-        self.M = pd.read_csv("datas.csv", parse_dates=['time'], index_col='time')
+        self.M = pd.read_csv("datas.csv", parse_dates=['t'], index_col='t')
         
         # Operation mode
         # self.operation_mode = "CONNECTED"
         self.operation_mode = "ISOLATED"
         
         # Optmization method
-        # self.optimization_method = "QP"
-        self.optimization_method = "MILP"
-        
+        self.optimization_method = "QP"
+        # self.optimization_method = "MILP"
         
         # Paths for files
         self.pv_path = "PV_model"
         self.load_path = "Load_model"
         
         # Time constants
-        self.NP_2TH = 15 # seconds
-        self.NP_3TH = 95 # minutes
-        self.TS_2TH = 1 # seconds
-        self.TS_3TH = 1 # seconds
+        self.NP_2TH         = 15 # seconds
+        self.NP_3TH         = 95 # minutes
+        self.TS_2TH         = 1 # seconds
+        self.TS_3TH         = 1 # seconds
         self.TS_MEASUREMENT = 1 # seconds
-        self.TS_FORECAST = 1 # minutes
-        self.TIME_SLEEP = 0.3 # seconds
+        self.TS_FORECAST    = 1 # minutes
+        self.TIME_SLEEP     = 0.3 # seconds
 
         # Technical specification constants
-        self.Q_BAT = int(12000)
-        # self.COST_BAT = 50000
-        # self.CC_BAT = self.COST_BAT/self.Q_BAT
-        # self.N_BAT = 6000
-        # self.COST_DEGR_BAT = 5*10^(-9)
-        self.SOC_BAT_MIN = 0.2
-        self.SOC_BAT_MAX = float(0.95)
-        self.P_BAT_MAX = int(200)
-        self.P_BAT_MIN = int(-200)
+        # bat
+        self.Q_BAT         = int(12000)
+        self.SOC_BAT_MIN   = 0.2
+        self.SOC_BAT_MAX   = float(0.95)
+        self.P_BAT_MAX     = int(200)
+        self.P_BAT_MIN     = int(-200)
         self.P_BAT_VAR_MAX = int(50)
         self.P_BAT_VAR_MIN = int(50)
-        
+        # sc
         self.SOC_SC_MIN = 0.2
         self.SOC_SC_MAX = float(0.95)
-        self.P_SC_MAX = int(200)
-        self.P_SC_MIN = int(-200)
-        
+        self.P_SC_MAX   = int(200)
+        self.P_SC_MIN   = int(-200)
+        # grid
         self.P_GRID_MAX = int(150)
         self.P_GRID_MIN = int(-150)
-        
-        # Optimization constants
-        self.SOC_SC_REF = 0.5
+
+        # Constansts references for optimization
+        self.SOC_SC_REF  = 0.5
         self.SOC_BAT_REF = 0.8
-        self.K_PV_REF_3TH = 1
-        
-        # WEIGHTs for objective function
-        # 3th
-        self.WEIGHT_K_PV_3TH = 1
-        self.WEIGHT_DELTA_BAT_3TH = 0.45
-        self.WEIGHT_SOC_BAT_3TH = 0.45
-        # 2th
-        self.WEIGHT_REF_BAT_2TH = 0.45
-        self.WEIGHT_SOC_SC_2TH = 0.001
-        
-        # Measurements
+        self.K_PV_REF    = 1
+              
+        # Measurements (Init values)
         self.soc_bat = 0.8
-        self.soc_sc = float(0.5)
-        self.p_pv = float(0)
-        self.p_load = float(-80)
-        self.p_grid = float(0)
-        self.p_bat = float(0)
-        self.p_sc = float(0)
+        self.soc_sc  = float(0.5)
+        self.p_pv    = float(0)
+        self.p_load  = float(-2)
+        self.p_grid  = float(0)
+        self.p_bat   = float(0)
+        self.p_sc    = float(0)
+        
+        # Scheduled (Calculated by 3th)
+        self.p_bat_sch  = 0
+        self.p_grid_sch = 0
+        self.k_pv_sch   = 0
+        
+        # References (Calculated by 2th)
+        self.p_bat_ref  = 0
+        self.p_grid_ref = 0
+        self.k_pv_ref   = 0
+        
+        
         
         ''' ------------------- Matrices for 3th ------------------- '''
         self.P_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
@@ -133,10 +132,19 @@ class Datas:
                                    'k_pv_2th': [0.0]*self.NP_2TH,
                                    'FO_2th': [0.0]*self.NP_2TH})
         
-        print("Datas initialized \n")
+        self.update_past_datas()
 
 
     def update_past_datas(self) -> None:
+        # print(self.M)
         
-        self.P_3th.iloc[0:self.Datas.NP_3TH-1, 'p_pv'] = self.M.iloc[0:self.Datas.NP_3TH-1, 'p_pv']
-        self.P_3th.iloc[0:self.Datas.NP_3TH-1, 'p_load'] = self.M.iloc[0:self.Datas.NP_3TH-1, 'p_load']
+        self.P_3th.loc[0:self.NP_3TH-1, 'p_pv'] = self.M.loc[0:self.NP_3TH-1, 'p_pv']
+        self.P_3th.loc[0:self.NP_3TH-1, 'p_load'] = self.M.loc[0:self.NP_3TH-1, 'p_load']
+            
+        
+        # plt.figure(figsize=(10, 5))
+        # time_steps = list(range(self.NP_3TH))
+        # plt.plot(time_steps, self.P_3th['p_pv'].values)
+        # plt.plot(time_steps, self.P_3th['p_load'].values)
+        # plt.show()
+                

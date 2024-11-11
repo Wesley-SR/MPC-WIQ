@@ -17,14 +17,12 @@ from pyModbusTCP.client import ModbusClient
 from OptimizationMIQP import OptimizationMIQP
 from OptimizationMILP import OptimizationMILP
 from datas import Datas
-from ForecastingModel import ForecastingModel
+# from ForecastingModel import ForecastingModel
 
 # Modbus
 from pyModbusTCP.client import ModbusClient
 
-import mmpw
-
-
+from mmpw import mmpw
 
 
 # *******************************************************
@@ -33,16 +31,15 @@ import mmpw
 class EMS():
     def __init__(self):
         
-        
         print("-------------------------")
-        print("Initialization")
+        print("1) EMS Initialization")
         # Create a object of datas
         self.Datas = Datas()
         
         # Execution variables
-        self.run_mpc = True
-        self.run_3th = True
-        self.run_2th = False
+        self.enable_run_EMS = True
+        self.enable_run_3th = True
+        self.enable_run_2th = False
         
         # Timers
         self.t = 96 # Time that start in matrix M (in simulation)
@@ -53,26 +50,41 @@ class EMS():
 
         # Create optimization object
         if self.Datas.optimization_method == "QP":
-            self.qp_optimization = OptimizationMIQP(self.Datas) # With the parameter self.Datas, the OptimizationMIQP methods can edit the object Data
+            self.qp_optimization = OptimizationMIQP()
         elif self.Datas.optimization_method == "MILP":
-            self.milp_optimization = OptimizationMILP(self.Datas)
+            self.milp_optimization = OptimizationMILP()
         
         # Create Modbus object
+        print("2) Modbus initialization")
         self.host = 'localhost'
         self.port = 502
         self.client_ID = 2
         try:
-            self.modbus_client = ModbusClient(host = self.host, port = self.port, unit_id = self.client_ID, debug=False, auto_open=True)
+            self.modbus_client = ModbusClient(host = self.host, port = self.port, unit_id = self.client_ID, auto_open=True)
         except Exception as e:
-            print("Erros connecting Modbus Client: {}".format(e))
+            print("[EMS Init] Error connecting Modbus Client: {}".format(e))
             self.modbus_client.close()
         self.counter_mb = 0
 
-        # Forecasting models
-        # self.forecast = ForecastingModel(self.Datas.pv_path, self.Datas.load_path)
+        # DataFrame for forecast
         
-        print("Initialized EMS")
+        self.pv_forecasted = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['data'])
+        self.load_forecasted = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['data'])
+        # DataFrame for past datas
+        self.pv_past = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['data'])
+        self.load_past = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['data'])
+        
+        # Get datas for first time
+        self.pv_past.loc[0:self.Datas.NP_3TH-1, 'data'] = self.Datas.M.loc[0:self.Datas.NP_3TH-1, 'p_pv']
+        self.load_past.loc[0:self.Datas.NP_3TH-1, 'data'] = self.Datas.M.loc[0:self.Datas.NP_3TH-1, 'p_load']
 
+        plt.figure(figsize=(10, 5))
+        time_steps = list(range(self.Datas.NP_3TH))
+        plt.plot(time_steps, self.pv_past['data'].values, label = 'pv_past')
+        plt.plot(time_steps, self.load_past['data'].values, label = 'load_past')
+        plt.title('Inicio')
+        plt.legend()
+        plt.grid()
 
 
 
@@ -84,7 +96,7 @@ class EMS():
         
         print("Run MPC")
         
-        while self.run_mpc:
+        while self.enable_run_EMS:
 
             print(f"t = {self.t}")    
 
@@ -93,58 +105,75 @@ class EMS():
                 self.get_measurements()
 
             # Run terciary optmization
-            if (self.is_it_time_to_run_3th() and self.run_3th):
+            if (self.is_it_time_to_run_3th() and self.enable_run_3th):
                 print("Update 3th data")
                 # Update past 3th data
-                self.Datas.P_3th.iloc[0:self.Datas.NP_3TH-1] = self.Datas.P_3th.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
-                self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample with the actual data
-                self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_load'] = self.Datas.p_load # Update the new load sample with the actual data
+                self.pv_past.iloc[0:self.Datas.NP_3TH-1] = self.pv_past.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
+                self.load_past.iloc[0:self.Datas.NP_3TH-1] = self.load_past.iloc[1:self.Datas.NP_3TH] # Discart the oldest sample
                 
-                print(f"p_pv mensuremented: {self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_pv']}")
-                print(f"p_load mensuremented: {self.Datas.P_3th.at[self.Datas.NP_3TH, 'p_load']}")
+                self.pv_past.at[self.Datas.NP_3TH, 'data'] = self.Datas.p_pv # Update the new PV sample with the actual data
+                self.load_past.at[self.Datas.NP_3TH, 'data'] = self.Datas.p_load # Update the new load sample with the actual data
                 
-                # Update the first row of the I_3th matrix
-                ## The first row of the I_3th matrix is a measurement.
-                self.Datas.I_3th.loc[0, 'pv_forecast'] = self.Datas.p_pv
-                self.Datas.I_3th.loc[0, 'load_forecast'] = self.Datas.p_load
+                print(f"p_pv mensuremented: {self.pv_past.at[self.Datas.NP_3TH, 'data']}")
+                print(f"p_load mensuremented: {self.load_past.at[self.Datas.NP_3TH, 'data']}")
+                
+                # Update the first row of the forecast DataFrames
+                ## The first row of the forecast DataFrames is a measurement.
+                self.pv_forecasted.loc[0, 'data'] = self.Datas.p_pv
+                self.load_forecasted.loc[0, 'data'] = self.Datas.p_load
 
                 # Run 3th forecast
-                # self.Datas.I_3th.loc[1:, 'pv_forecast']   = self.forecast.predict_pv(self.Datas.P_3th[:, 'p_pv'])
-                # self.Datas.I_3th.loc[1:, 'load_forecast'] = self.forecast.predict_load(self.Datas.P_3th[:, 'p_load'])
-                self.Datas.I_3th.loc[1:, 'pv_forecast']   = mmpw(self.Datas.P_3th[:,'p_pv'])
-                self.Datas.I_3th.loc[1:, 'load_forecast'] = mmpw(self.Datas.P_3th[:,'p_load'])
-                
-                # Run optmization 3th
-                self.run_3th_optimization()
+                # self.Datas.I_3th.loc[1:, 'pv_forecasted']   = self.forecast.predict_pv(self.Datas.P_3th[:, 'p_pv'])
+                # self.Datas.I_3th.loc[1:, 'load_forecasted'] = self.forecast.predict_load(self.Datas.P_3th[:, 'p_load'])
 
+                self.pv_forecasted.iloc[1:]   = mmpw(self.pv_past, self.Datas.NP_3TH)
+                self.load_forecasted.iloc[1:] = mmpw(self.load_past, self.Datas.NP_3TH)
+                
+                print("[run] Forecas realized")
+                # Run optmization 3th
+                results_3th = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['p_bat_sch', 'k_pv_sch'])
+                OF_3th      = 0
+                
+                
+                plt.figure(figsize=(10, 5))
+                time_steps = list(range(self.Datas.NP_3TH))
+                plt.plot(time_steps, self.pv_forecasted['data'].values, label = 'pv_forecasted')
+                plt.plot(time_steps, self.load_forecasted['data'].values, label = 'load_forecasted')
+                plt.table("Forecast")
+                plt.legend()
+                plt.grid()
+                
+                results_3th, OF_3th = self.run_3th_optimization()
+                self.Datas.k_pv_sch     = results_3th.loc[0, 'k_pv_sch']
+                self.Datas.p_bat_sch    = results_3th.loc[0, 'p_bat_sch']
+                # self.Datas.p_grid_sch = results_3th.loc[0, 'p_grid_sch'] # Not used
+                
+                plt.figure(figsize=(10, 5))
+                time_steps = list(range(self.Datas.NP_3TH))
+                plt.plot(time_steps, results_3th['p_bat_sch'].values, label = 'p_bat_sch')
+                plt.plot(time_steps, results_3th['k_pv_sch'].values, label = 'k_pv_sch')
+                plt.table("Schedule")
+                plt.legend()
+                plt.grid()
+                
             # Run 2th optmization
-            if (self.is_it_time_to_run_2th() and self.run_2th):
-                # Update past 2th data
-                self.Datas.P_2th.iloc[0:self.Datas.NP_2TH-1] = self.Datas.P_2th.iloc[1:self.Datas.NP_2TH] # Discart the oldest sample
-                self.Datas.P_2th.at[self.Datas.NP_2TH, 'p_pv'] = self.Datas.p_pv # Update the new PV sample
-                self.Datas.P_2th.at[self.Datas.NP_2TH, 'p_load'] = self.Datas.p_load # Update the new load sample
-                
-                # Assumes the same value for the entire forecast horizon
-                self.Datas.I_2th.loc['pv_forecast'] = self.Datas.p_pv
-                self.Datas.I_2th.loc['load_forecast'] = self.Datas.p_load
-                
-                # Updates reference signals
-                self.Datas.I_2th.loc['p_bat_ref'] = self.Datas.R_3th.loc[self.Datas.NP_3TH, 'p_bat_3th']
-                self.Datas.I_2th.loc['p_bat_ref'] = self.Datas.R_3th.loc[self.Datas.NP_3TH, 'p_bat_3th']
-                
+            if (self.is_it_time_to_run_2th() and self.enable_run_2th):
+
                 # Run optimization 2th
-                self.run_2th_optimization()
+                self.run_2th_optimization(self.Datas)
                 
                 self.send_control_signals()
 
             # Check if it's time to stop the code
-            self.run_mpc = False # To run only a time
-            if not self.run_mpc:
+            self.enable_run_EMS = False # To run only a time
+            if not self.enable_run_EMS:
                 break
         
             self.t = self.t + 1
+        
+        plt.show()
             
-        self.plot_result()
+        # self.plot_result() # Tem erro, analisar
         return self.Datas
 
 
@@ -192,42 +221,45 @@ class EMS():
 
     def run_3th_optimization(self) -> None:
         print("run_3th_optimization")
+        results_3th = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['p_bat_sch', 'k_pv_sch'])
+        OF_3th      = 0
         # Call optimization
         if (self.Datas.operation_mode == "CONNECTED"):
             if (self.Datas.optimization_method == "QP"):
-                self.qp_optimization.connected_optimization_3th()
+                results_3th, OF_3th = self.qp_optimization.connected_optimization_3th(self.Datas, self.pv_forecasted, self.load_forecasted)
             elif(self.Datas.optimization_method == "MILP"):
                 # self.milp_optimization.connected_optimization_3th()
                 print("Dont have connected MILP")
 
         elif (self.Datas.operation_mode == "ISOLATED"):
             if (self.Datas.optimization_method == "QP"):
-                self.qp_optimization.isolated_optimization_3th()
+                results_3th, OF_3th = self.qp_optimization.isolated_optimization_3th(self.Datas, self.pv_forecasted, self.load_forecasted)
             elif (self.Datas.optimization_method == "MILP"):
-                self.milp_optimization.isolated_optimization_3th()
+                results_3th, OF_3th = self.milp_optimization.isolated_optimization_3th(self.Datas, self.pv_forecasted, self.load_forecasted)
             else:
                 print("Don't have optimization method")
                 
         else:
             print("Don't have optimization method")
-
+    
+        return results_3th, OF_3th
 
 
     def run_2th_optimization(self) -> None:
         # Update the first row of the I_2th matrix
-        self.Datas.I_2th.loc[:, 'pv_forecast'] = self.Datas.p_pv
-        self.Datas.I_2th.loc[:, 'load_forecast'] = self.Datas.p_load
+        self.Datas.I_2th.loc[:, 'pv_forecasted'] = self.Datas.p_pv
+        self.Datas.I_2th.loc[:, 'load_forecasted'] = self.Datas.p_load
         
         # Call optimization
         if (self.Datas.operation_mode == "CONNECTED"):
             if (self.Datas.optimization_method == "QP"):
-                self.qp_optimization.connected_optimization_2th()
+                self.qp_optimization.connected_optimization_2th(self.Datas)
             elif (self.Datas.optimization_method == "MILP"):
                 print("TODO: MILP Optimization")
                 pass
         elif (self.Datas.operation_mode == "ISOLATED"):
             if (self.Datas.optimization_method == "QP"):
-                self.qp_optimization.isolated_optimization_2th()
+                self.qp_optimization.isolated_optimization_2th(self.Datas)
             elif (self.Datas.optimization_method == "MILP"):
                 print("TODO: MILP Optimization")
                 pass
@@ -257,24 +289,24 @@ class EMS():
                     self.Datas.operation_mode = "ISOLATED"
                 
                 # Datas from microgrid
-                self.Datas.p_pv         = registers[3]/1000
-                self.Datas.p_load       = registers[4]/1000
-                self.Datas.p_grid       = registers[5]/1000
-                self.Datas.p_bat        = registers[6]/1000
-                self.Datas.p_sc         = registers[7]/1000
-                self.Datas.soc_bat      = registers[8]/1000
-                self.Datas.soc_sc       = registers[9]/1000
+                self.measurements["p_pv"]         = registers[3]/1000
+                self.measurements["p_load"]       = registers[4]/1000
+                self.measurements["p_grid"]       = registers[5]/1000
+                self.measurements["p_bat"]        = registers[6]/1000
+                self.measurements["p_sc"]         = registers[7]/1000
+                self.measurements["soc_bat"]      = registers[8]/1000
+                self.measurements["soc_sc"]       = registers[9]/1000
                 
-                print("Measurements \n")
-                print(f'cmd_to_send_new_data:    {cmd_to_send_new_data} \n')
-                print(f'operation_mode: {self.Datas.operation_mode} \n')
-                print(f'p_pv:           {self.Datas.p_pv} \n')
-                print(f'p_load:         {self.Datas.p_load} \n')
-                print(f'p_grid:         {self.Datas.p_grid} \n')
-                print(f'p_bat:          {self.Datas.p_bat} \n')
-                print(f'p_sc:           {self.Datas.p_sc} \n')
-                print(f'soc_bat:        {self.Datas.soc_bat} \n')
-                print(f'soc_sc:         {self.Datas.soc_sc} \n\n')
+                print("Measurements")
+                print(f'cmd_to_send_new_data:    {cmd_to_send_new_data}')
+                print(f'operation_mode: {self.Datas.operation_mode}')
+                print(f'p_pv:    {self.measurements["p_pv"]}')
+                print(f'p_load:  {self.measurements["p_load"]}')
+                print(f'p_grid:  {self.measurements["p_grid"]}')
+                print(f'p_bat:   {self.measurements["p_bat"]}')
+                print(f'p_sc:    {self.measurements["p_sc"]}')
+                print(f'soc_bat: {self.measurements["soc_bat"]}')
+                print(f'soc_sc:  {self.measurements["soc_sc"]} \n')
                 
                 self.counter_mb += 1
                 wait_for_new_data = 0
@@ -303,9 +335,9 @@ class EMS():
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_grid_3th'], marker='o', linestyle='-', color='r', label='Grid')
         
         plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_bat_3th'], marker='o', linestyle='-', color='b', label='Battery')
-        plt.plot(time_steps, self.Datas.I_3th.loc[:, 'pv_forecast'], marker='o', linestyle='-', color='orange', label='PV')
-        plt.plot(time_steps, self.Datas.I_3th.loc[:, 'load_forecast'], marker='o', linestyle='-', color='g', label='Load')
-        plt.plot(time_steps, self.Datas.I_3th.loc[:, 'pv_forecast']*self.Datas.R_3th.loc[:, 'k_pv_3th'], linestyle='-', color='orange', label='Load')
+        plt.plot(time_steps, self.Datas.I_3th.loc[:, 'pv_forecasted'], marker='o', linestyle='-', color='orange', label='PV')
+        plt.plot(time_steps, self.Datas.I_3th.loc[:, 'load_forecasted'], marker='o', linestyle='-', color='g', label='Load')
+        plt.plot(time_steps, self.Datas.I_3th.loc[:, 'pv_forecasted']*self.Datas.R_3th.loc[:, 'k_pv_3th'], linestyle='-', color='orange', label='Load')
         plt.axhline(0, color='black', linestyle='--')
         plt.xlabel('Time (h)')
         plt.ylabel('Power (kW)')
