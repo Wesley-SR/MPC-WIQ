@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 class Datas:
     def __init__(self):
         
-        self.M = pd.read_csv("datas.csv", parse_dates=['t'], index_col='t')
+        self.M = pd.read_csv("datas.csv", index_col='t')
         
         # Operation mode
         # self.operation_mode = "CONNECTED"
@@ -28,7 +28,7 @@ class Datas:
         
         # Time constants
         self.NP_2TH         = 15 # seconds
-        self.NP_3TH         = 95 # minutes
+        self.NP_3TH         = 96 # minutes
         self.TS_2TH         = 1 # seconds
         self.TS_3TH         = 1 # seconds
         self.TS_MEASUREMENT = 1 # seconds
@@ -37,18 +37,21 @@ class Datas:
 
         # Technical specification constants
         # bat
-        self.Q_BAT         = int(12000)
+        self.Q_BAT         = int(120)
         self.SOC_BAT_MIN   = 0.2
         self.SOC_BAT_MAX   = float(0.95)
-        self.P_BAT_MAX     = int(200)
-        self.P_BAT_MIN     = int(-200)
+        self.P_BAT_MAX     = int(20)
+        self.P_BAT_MIN     = int(-20)
         self.P_BAT_VAR_MAX = int(50)
         self.P_BAT_VAR_MIN = int(50)
         # sc
+        self.Q_SC         = int(0.289)
         self.SOC_SC_MIN = 0.2
         self.SOC_SC_MAX = float(0.95)
-        self.P_SC_MAX   = int(200)
-        self.P_SC_MIN   = int(-200)
+        self.P_SC_MAX   = int(50)
+        self.P_SC_MIN   = int(-50)
+        self.P_SC_VAR_MAX = int(50)
+        self.P_SC_VAR_MIN = int(50)
         # grid
         self.P_GRID_MAX = int(150)
         self.P_GRID_MIN = int(-150)
@@ -59,7 +62,7 @@ class Datas:
         self.K_PV_REF    = 1
               
         # Measurements (Init values)
-        self.soc_bat = 0.8
+        self.soc_bat = 0.65
         self.soc_sc  = float(0.5)
         self.p_pv    = float(0)
         self.p_load  = float(-2)

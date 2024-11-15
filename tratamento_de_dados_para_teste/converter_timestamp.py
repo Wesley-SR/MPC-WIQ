@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 ts_segundos_desejado = 15*60
 
 # Nome para arquivos e caminho
-arquivo = "datas"
-novo_arquivo = "load_{}_sec".format(ts_segundos_desejado)
-caminho = ""  # Por a barra "/" no caminho
+arquivo = "p_pv_5_min_SNPTEE" # Caminho do arquivo base
+caminho = ""  # Por a barra "/" no caminho. Deixe vazio se estive na mesma pasta
+novo_arquivo = "p_pv_15_min_SNPTEE" # Nome pro novo arquivo
 
 # Ler o arquivo original com a coluna de tempo como timestamp e definir como índice
 df_original = pd.read_csv("{}{}.csv".format(caminho, arquivo), parse_dates=['time'], index_col='time')
