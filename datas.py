@@ -65,7 +65,7 @@ class Datas:
         self.soc_bat = 0.65
         self.soc_sc  = float(0.5)
         self.p_pv    = float(0)
-        self.p_load  = float(-2)
+        self.p_load  = float(0.5)
         self.p_grid  = float(0)
         self.p_bat   = float(0)
         self.p_sc    = float(0)
