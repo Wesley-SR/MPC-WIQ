@@ -134,7 +134,6 @@ class EMS():
                 results_3th = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['p_bat_sch', 'k_pv_sch'])
                 OF_3th      = 0
                 
-                
                 plt.figure(figsize=(10, 5))
                 time_steps = list(range(self.Datas.NP_3TH))
                 plt.plot(time_steps, self.pv_forecasted['data'].values, label = 'pv_forecasted')
@@ -142,10 +141,16 @@ class EMS():
                 plt.table("Forecast")
                 plt.legend()
                 plt.grid()
-                
+
                 results_3th, OF_3th = self.run_3th_optimization()
                 self.Datas.k_pv_sch     = results_3th.loc[0, 'k_pv_sch']
                 self.Datas.p_bat_sch    = results_3th.loc[0, 'p_bat_sch']
+                if self.Datas.p_bat_sch >= 0:
+                    self.Datas.p_bat_dis_sch = self.Datas.p_bat_sch
+                    self.Datas.p_bat_ch_sch  = 0
+                else:
+                    self.Datas.p_bat_dis_sch = 0
+                    self.Datas.p_bat_ch_sch  = self.Datas.p_bat_sch
                 # self.Datas.p_grid_sch = results_3th.loc[0, 'p_grid_sch'] # Not used
                 
                 plt.figure(figsize=(10, 5))

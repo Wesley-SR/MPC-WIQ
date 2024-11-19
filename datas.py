@@ -71,9 +71,11 @@ class Datas:
         self.p_sc    = float(0)
         
         # Scheduled (Calculated by 3th)
-        self.p_bat_sch  = 0
-        self.p_grid_sch = 0
-        self.k_pv_sch   = 0
+        self.p_bat_sch     = 0
+        self.p_bat_ch_sch  = 0
+        self.p_bat_dis_sch = 0
+        self.p_grid_sch    = 0
+        self.k_pv_sch      = 0
         
         # References (Calculated by 2th)
         self.p_bat_ref  = 0
