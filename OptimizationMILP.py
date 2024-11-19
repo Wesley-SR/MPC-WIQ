@@ -39,44 +39,44 @@ class OptimizationMILP():
         
         # Battery power variation module (Absolute value = A)
         # Charg
-        A_bat_a_var_ch      = pl.LpVariable.dicts('A_bat_a_var_ch',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
-        A_bat_b_var_ch      = pl.LpVariable.dicts('A_bat_b_var_ch',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
-        flag_A_bat_a_var_ch = pl.LpVariable.dicts('flag_A_bat_a_var_ch', range(Datas.NP_3TH), cat='Binary')
-        flag_A_bat_b_var_ch = pl.LpVariable.dicts('flag_A_bat_b_var_ch', range(Datas.NP_3TH), cat='Binary')
+        abs_bat_a_var_ch      = pl.LpVariable.dicts('abs_bat_a_var_ch',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        abs_bat_b_var_ch      = pl.LpVariable.dicts('abs_bat_b_var_ch',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        flag_abs_bat_a_var_ch = pl.LpVariable.dicts('flag_abs_bat_a_var_ch', range(Datas.NP_3TH), cat='Binary')
+        flag_abs_bat_b_var_ch = pl.LpVariable.dicts('flag_abs_bat_b_var_ch', range(Datas.NP_3TH), cat='Binary')
         # Discharge
-        A_bat_a_var_dis      = pl.LpVariable.dicts('A_bat_a_var_dis',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
-        A_bat_b_var_dis      = pl.LpVariable.dicts('A_bat_b_var_dis',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
-        flag_A_bat_a_var_dis = pl.LpVariable.dicts('flag_A_bat_a_var_dis', range(Datas.NP_3TH), cat='Binary')
-        flag_A_bat_b_var_dis = pl.LpVariable.dicts('flag_A_bat_b_var_dis', range(Datas.NP_3TH), cat='Binary')
+        abs_bat_a_var_dis      = pl.LpVariable.dicts('abs_bat_a_var_dis',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        abs_bat_b_var_dis      = pl.LpVariable.dicts('abs_bat_b_var_dis',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        flag_abs_bat_a_var_dis = pl.LpVariable.dicts('flag_abs_bat_a_var_dis', range(Datas.NP_3TH), cat='Binary')
+        flag_abs_bat_b_var_dis = pl.LpVariable.dicts('flag_abs_bat_b_var_dis', range(Datas.NP_3TH), cat='Binary')
         
         # Battery absolute values
-        A_bat_a_soc      = pl.LpVariable.dicts('A_bat_a_soc',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_MAX, cat='Continuous')
-        A_bat_b_soc      = pl.LpVariable.dicts('A_bat_b_soc',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_MAX, cat='Continuous')
-        flag_A_bat_a_soc = pl.LpVariable.dicts('flag_A_bat_a_soc', range(Datas.NP_3TH), cat='Binary')
-        flag_A_bat_b_soc = pl.LpVariable.dicts('flag_A_bat_b_soc', range(Datas.NP_3TH), cat='Binary')
+        abs_bat_a_soc      = pl.LpVariable.dicts('abs_bat_a_soc',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_MAX, cat='Continuous')
+        abs_bat_b_soc      = pl.LpVariable.dicts('abs_bat_b_soc',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_MAX, cat='Continuous')
+        flag_abs_bat_a_soc = pl.LpVariable.dicts('flag_abs_bat_a_soc', range(Datas.NP_3TH), cat='Binary')
+        flag_abs_bat_b_soc = pl.LpVariable.dicts('flag_abs_bat_b_soc', range(Datas.NP_3TH), cat='Binary')
         
         # Photovoltaic Panel
         k_pv              = pl.LpVariable.dicts('k_pv',          range(Datas.NP_3TH), lowBound=0, upBound=1, cat='Continuous')
-        A_k_pv_a_3th      = pl.LpVariable.dicts('A_k_pv_a_3th',      range(Datas.NP_3TH), lowBound=0, upBound=1, cat='Continuous')
-        A_k_pv_b_3th      = pl.LpVariable.dicts('A_k_pv_b_3th',      range(Datas.NP_3TH), lowBound=0, upBound=1, cat='Continuous')
-        flag_A_k_pv_a_3th = pl.LpVariable.dicts('flag_A_k_pv_a_3th', range(Datas.NP_3TH), cat='Binary')
-        flag_A_k_pv_b_3th = pl.LpVariable.dicts('flag_A_k_pv_b_3th', range(Datas.NP_3TH), cat='Binary')
+        abs_k_pv_a_3th      = pl.LpVariable.dicts('abs_k_pv_a_3th',      range(Datas.NP_3TH), lowBound=0, upBound=1, cat='Continuous')
+        abs_k_pv_b_3th      = pl.LpVariable.dicts('abs_k_pv_b_3th',      range(Datas.NP_3TH), lowBound=0, upBound=1, cat='Continuous')
+        flag_abs_k_pv_a_3th = pl.LpVariable.dicts('flag_abs_k_pv_a_3th', range(Datas.NP_3TH), cat='Binary')
+        flag_abs_k_pv_b_3th = pl.LpVariable.dicts('flag_abs_k_pv_b_3th', range(Datas.NP_3TH), cat='Binary')
 
 
         ''' ------------------------- FUNÇÃO OBJETIVO ------------------------------'''
-        J_pv_3th          = pl.lpSum([(A_k_pv_a_3th[k] + A_k_pv_b_3th[k]) for k in range(Datas.NP_3TH)])
+        J_pv_3th          = pl.lpSum([(abs_k_pv_a_3th[k] + abs_k_pv_b_3th[k]) for k in range(Datas.NP_3TH)])
         
-        J_bat_var_ch  = pl.lpSum([(A_bat_a_var_ch[k] + A_bat_b_var_ch[k])] for k in range(Datas.NP_3TH))
+        J_bat_var_ch  = pl.lpSum([(abs_bat_a_var_ch[k] + abs_bat_b_var_ch[k])] for k in range(Datas.NP_3TH))
         
-        J_bat_var_dis = pl.lpSum([(A_bat_a_var_dis[k] + A_bat_b_var_dis[k])] for k in range(Datas.NP_3TH))
+        J_bat_var_dis = pl.lpSum([(abs_bat_a_var_dis[k] + abs_bat_b_var_dis[k])] for k in range(Datas.NP_3TH))
         
-        J_bat_var_soc = pl.lpSum([(A_bat_a_soc[k] + A_bat_b_soc[k])] for k in range(Datas.NP_3TH))
+        J_bat_var_soc = pl.lpSum([(abs_bat_a_soc[k] + abs_bat_b_soc[k])] for k in range(Datas.NP_3TH))
         
         # Divide por 2 porque sao duas parcelas referente a mesma coisa
         # TODO: Dividir pelo máximo da parcela (Deve passar por normalização)
         objective_function = ( (WEIGHT_K_PV      * J_pv_3th          / 1)
-                             + (WEIGHT_DELTA_BAT * J_bat_var_ch  / 1)
-                             + (WEIGHT_DELTA_BAT * J_bat_var_dis / 1)
+                             + (WEIGHT_DELTA_BAT * J_bat_var_ch  / 2)
+                             + (WEIGHT_DELTA_BAT * J_bat_var_dis / 2)
                              + (WEIGHT_SOC_BAT   * J_bat_var_soc / 1)
                              )
         prob.setObjective(objective_function)
@@ -98,22 +98,22 @@ class OptimizationMILP():
             
             # Absolute value for battery power variation
             if k > 0:
-                prob += A_bat_a_var_ch[k] - A_bat_b_var_ch[k] == p_bat_ch[k] - p_bat_ch[k-1]
-                prob += A_bat_a_var_dis[k] - A_bat_b_var_dis[k] == p_bat_dis[k] - p_bat_dis[k-1]
+                prob += abs_bat_a_var_ch[k] - abs_bat_b_var_ch[k] == p_bat_ch[k] - p_bat_ch[k-1]
+                prob += abs_bat_a_var_dis[k] - abs_bat_b_var_dis[k] == p_bat_dis[k] - p_bat_dis[k-1]
             else:
                 if Datas.p_bat >= 0:
-                   prob += A_bat_a_var_ch[k] - A_bat_b_var_dis[k] == 0
-                   prob += A_bat_a_var_dis[k] - A_bat_b_var_dis[k] == p_bat_dis[k] - Datas.p_bat
+                   prob += abs_bat_a_var_ch[k] - abs_bat_b_var_dis[k] == 0
+                   prob += abs_bat_a_var_dis[k] - abs_bat_b_var_dis[k] == p_bat_dis[k] - Datas.p_bat
                 else:
-                   prob += A_bat_a_var_ch[k] - A_bat_b_var_ch[k] == p_bat_ch[k] - Datas.p_bat
-                   prob += A_bat_a_var_dis[k] - A_bat_b_var_dis[k] == p_bat_dis[k] - 0
+                   prob += abs_bat_a_var_ch[k] - abs_bat_b_var_ch[k] == p_bat_ch[k] - Datas.p_bat
+                   prob += abs_bat_a_var_dis[k] - abs_bat_b_var_dis[k] == p_bat_dis[k] - 0
             
-            prob += A_bat_a_var_ch[k] <= flag_A_bat_a_var_ch[k] * Datas.P_BAT_VAR_MAX
-            prob += A_bat_b_var_ch[k] <= flag_A_bat_b_var_ch[k] * Datas.P_BAT_VAR_MAX
-            prob += flag_A_bat_a_var_ch[k] + flag_A_bat_b_var_ch[k] <= 1 # simultaneity
-            prob += A_bat_a_var_dis[k] <= flag_A_bat_a_var_dis[k] * Datas.P_BAT_VAR_MAX
-            prob += A_bat_b_var_dis[k] <= flag_A_bat_b_var_dis[k] * Datas.P_BAT_VAR_MAX
-            prob += flag_A_bat_a_var_dis[k] + flag_A_bat_b_var_dis[k] <= 1 # simultaneity
+            prob += abs_bat_a_var_ch[k] <= flag_abs_bat_a_var_ch[k] * Datas.P_BAT_VAR_MAX
+            prob += abs_bat_b_var_ch[k] <= flag_abs_bat_b_var_ch[k] * Datas.P_BAT_VAR_MAX
+            prob += flag_abs_bat_a_var_ch[k] + flag_abs_bat_b_var_ch[k] <= 1 # simultaneity
+            prob += abs_bat_a_var_dis[k] <= flag_abs_bat_a_var_dis[k] * Datas.P_BAT_VAR_MAX
+            prob += abs_bat_b_var_dis[k] <= flag_abs_bat_b_var_dis[k] * Datas.P_BAT_VAR_MAX
+            prob += flag_abs_bat_a_var_dis[k] + flag_abs_bat_b_var_dis[k] <= 1 # simultaneity
 
             # Battery SOC
             if k > 0:
@@ -122,16 +122,16 @@ class OptimizationMILP():
                 prob += soc_bat[k] == Datas.soc_bat
 
             # Absolute value between SOC and SOC_ref
-            prob += A_bat_a_soc[k] - A_bat_b_soc[k] == soc_bat[k] - Datas.SOC_BAT_REF
-            prob += A_bat_a_soc[k] <= flag_A_bat_a_soc
-            prob += A_bat_b_soc[k] <= flag_A_bat_b_soc
-            prob += flag_A_bat_a_soc[k] + flag_A_bat_b_soc[k] <= 1 # simultaneity
+            prob += abs_bat_a_soc[k] - abs_bat_b_soc[k] == soc_bat[k] - Datas.SOC_BAT_REF
+            prob += abs_bat_a_soc[k] <= flag_abs_bat_a_soc
+            prob += abs_bat_b_soc[k] <= flag_abs_bat_b_soc
+            prob += flag_abs_bat_a_soc[k] + flag_abs_bat_b_soc[k] <= 1 # simultaneity
 
             # Absolute value between k_pv and K_PV_REF
-            prob += A_k_pv_a_3th[k] - A_k_pv_b_3th[k] == k_pv[k] - Datas.K_PV_REF
-            prob += A_k_pv_a_3th[k] <= flag_A_k_pv_a_3th
-            prob += A_k_pv_b_3th[k] <= flag_A_k_pv_b_3th
-            prob += flag_A_k_pv_a_3th[k] + flag_A_k_pv_b_3th[k] <= 1 # simultaneity
+            prob += abs_k_pv_a_3th[k] - abs_k_pv_b_3th[k] == k_pv[k] - Datas.K_PV_REF
+            prob += abs_k_pv_a_3th[k] <= flag_abs_k_pv_a_3th
+            prob += abs_k_pv_b_3th[k] <= flag_abs_k_pv_b_3th
+            prob += flag_abs_k_pv_a_3th[k] + flag_abs_k_pv_b_3th[k] <= 1 # simultaneity
             
             
             # BALANÇO DE POTÊNCIA NO BARRAMENTO DC
@@ -213,44 +213,44 @@ class OptimizationMILP():
         
         # Battery power variation module (Absolute value = A)
         # Charg
-        A_bat_a_var_ch      = pl.LpVariable.dicts('A_bat_a_var_ch',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
-        A_bat_b_var_ch      = pl.LpVariable.dicts('A_bat_b_var_ch',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
-        flag_A_bat_a_var_ch = pl.LpVariable.dicts('flag_A_bat_a_var_ch', range(Datas.NP_2TH), cat='Binary')
-        flag_A_bat_b_var_ch = pl.LpVariable.dicts('flag_A_bat_b_var_ch', range(Datas.NP_2TH), cat='Binary')
+        abs_bat_a_var_ch      = pl.LpVariable.dicts('abs_bat_a_var_ch',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        abs_bat_b_var_ch      = pl.LpVariable.dicts('abs_bat_b_var_ch',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        flag_abs_bat_a_var_ch = pl.LpVariable.dicts('flag_abs_bat_a_var_ch', range(Datas.NP_2TH), cat='Binary')
+        flag_abs_bat_b_var_ch = pl.LpVariable.dicts('flag_abs_bat_b_var_ch', range(Datas.NP_2TH), cat='Binary')
         # Discharge
-        A_bat_a_var_dis      = pl.LpVariable.dicts('A_bat_a_var_dis',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
-        A_bat_b_var_dis      = pl.LpVariable.dicts('A_bat_b_var_dis',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
-        flag_A_bat_a_var_dis = pl.LpVariable.dicts('flag_A_bat_a_var_dis', range(Datas.NP_2TH), cat='Binary')
-        flag_A_bat_b_var_dis = pl.LpVariable.dicts('flag_A_bat_b_var_dis', range(Datas.NP_2TH), cat='Binary')
+        abs_bat_a_var_dis      = pl.LpVariable.dicts('abs_bat_a_var_dis',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        abs_bat_b_var_dis      = pl.LpVariable.dicts('abs_bat_b_var_dis',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        flag_abs_bat_a_var_dis = pl.LpVariable.dicts('flag_abs_bat_a_var_dis', range(Datas.NP_2TH), cat='Binary')
+        flag_abs_bat_b_var_dis = pl.LpVariable.dicts('flag_abs_bat_b_var_dis', range(Datas.NP_2TH), cat='Binary')
         
         # Battery absolute values
-        A_bat_a_soc      = pl.LpVariable.dicts('A_bat_a_soc',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_MAX, cat='Continuous')
-        A_bat_b_soc      = pl.LpVariable.dicts('A_bat_b_soc',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_MAX, cat='Continuous')
-        flag_A_bat_a_soc = pl.LpVariable.dicts('flag_A_bat_a_soc', range(Datas.NP_2TH), cat='Binary')
-        flag_A_bat_b_soc = pl.LpVariable.dicts('flag_A_bat_b_soc', range(Datas.NP_2TH), cat='Binary')
+        abs_bat_a_soc      = pl.LpVariable.dicts('abs_bat_a_soc',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_MAX, cat='Continuous')
+        abs_bat_b_soc      = pl.LpVariable.dicts('abs_bat_b_soc',      range(Datas.NP_2TH), lowBound=0, upBound=Datas.P_BAT_MAX, cat='Continuous')
+        flag_abs_bat_a_soc = pl.LpVariable.dicts('flag_abs_bat_a_soc', range(Datas.NP_2TH), cat='Binary')
+        flag_abs_bat_b_soc = pl.LpVariable.dicts('flag_abs_bat_b_soc', range(Datas.NP_2TH), cat='Binary')
         
         # Photovoltaic Panel
         k_pv              = pl.LpVariable.dicts('k_pv',          range(Datas.NP_2TH), lowBound=0, upBound=1, cat='Continuous')
-        A_k_pv_a_3th      = pl.LpVariable.dicts('A_k_pv_a_3th',      range(Datas.NP_2TH), lowBound=0, upBound=1, cat='Continuous')
-        A_k_pv_b_3th      = pl.LpVariable.dicts('A_k_pv_b_3th',      range(Datas.NP_2TH), lowBound=0, upBound=1, cat='Continuous')
-        flag_A_k_pv_a_3th = pl.LpVariable.dicts('flag_A_k_pv_a_3th', range(Datas.NP_2TH), cat='Binary')
-        flag_A_k_pv_b_3th = pl.LpVariable.dicts('flag_A_k_pv_b_3th', range(Datas.NP_2TH), cat='Binary')
+        abs_k_pv_a_3th      = pl.LpVariable.dicts('abs_k_pv_a_3th',      range(Datas.NP_2TH), lowBound=0, upBound=1, cat='Continuous')
+        abs_k_pv_b_3th      = pl.LpVariable.dicts('abs_k_pv_b_3th',      range(Datas.NP_2TH), lowBound=0, upBound=1, cat='Continuous')
+        flag_abs_k_pv_a_3th = pl.LpVariable.dicts('flag_abs_k_pv_a_3th', range(Datas.NP_2TH), cat='Binary')
+        flag_abs_k_pv_b_3th = pl.LpVariable.dicts('flag_abs_k_pv_b_3th', range(Datas.NP_2TH), cat='Binary')
 
 
         ''' ------------------------- FUNÇÃO OBJETIVO ------------------------------'''
-        J_pv_3th          = pl.lpSum([(A_k_pv_a_3th[k] + A_k_pv_b_3th[k]) for k in range(Datas.NP_2TH)])
+        J_pv_3th      = pl.lpSum([(abs_k_pv_a_3th[k] + abs_k_pv_b_3th[k]) for k in range(Datas.NP_2TH)])
         
-        J_bat_var_ch  = pl.lpSum([(A_bat_a_var_ch[k] + A_bat_b_var_ch[k])] for k in range(Datas.NP_2TH))
+        J_bat_var_ch  = pl.lpSum([(abs_bat_a_var_ch[k] + abs_bat_b_var_ch[k])] for k in range(Datas.NP_2TH))
         
-        J_bat_var_dis = pl.lpSum([(A_bat_a_var_dis[k] + A_bat_b_var_dis[k])] for k in range(Datas.NP_2TH))
+        J_bat_var_dis = pl.lpSum([(abs_bat_a_var_dis[k] + abs_bat_b_var_dis[k])] for k in range(Datas.NP_2TH))
         
-        J_bat_var_soc = pl.lpSum([(A_bat_a_soc[k] + A_bat_b_soc[k])] for k in range(Datas.NP_2TH))
+        J_bat_var_soc = pl.lpSum([(abs_bat_a_soc[k] + abs_bat_b_soc[k])] for k in range(Datas.NP_2TH))
         
         # Divide por 2 porque sao duas parcelas referente a mesma coisa
         # TODO: Dividir pelo máximo da parcela (Deve passar por normalização)
         objective_function = ( (WEIGHT_K_PV      * J_pv_3th          / 1)
-                             + (WEIGHT_DELTA_BAT * J_bat_var_ch  / 1)
-                             + (WEIGHT_DELTA_BAT * J_bat_var_dis / 1)
+                             + (WEIGHT_DELTA_BAT * J_bat_var_ch  / 2)
+                             + (WEIGHT_DELTA_BAT * J_bat_var_dis / 2)
                              + (WEIGHT_SOC_BAT   * J_bat_var_soc / 1)
                              )
         prob.setObjective(objective_function)
@@ -272,22 +272,22 @@ class OptimizationMILP():
             
             # Absolute value for battery power variation
             if k > 0:
-                prob += A_bat_a_var_ch[k] - A_bat_b_var_ch[k] == p_bat_ch[k] - p_bat_ch[k-1]
-                prob += A_bat_a_var_dis[k] - A_bat_b_var_dis[k] == p_bat_dis[k] - p_bat_dis[k-1]
+                prob += abs_bat_a_var_ch[k] - abs_bat_b_var_ch[k] == p_bat_ch[k] - p_bat_ch[k-1]
+                prob += abs_bat_a_var_dis[k] - abs_bat_b_var_dis[k] == p_bat_dis[k] - p_bat_dis[k-1]
             else:
                 if Datas.p_bat >= 0:
-                   prob += A_bat_a_var_ch[k] - A_bat_b_var_dis[k] == 0
-                   prob += A_bat_a_var_dis[k] - A_bat_b_var_dis[k] == p_bat_dis[k] - Datas.p_bat
+                   prob += abs_bat_a_var_ch[k] - abs_bat_b_var_dis[k] == 0
+                   prob += abs_bat_a_var_dis[k] - abs_bat_b_var_dis[k] == p_bat_dis[k] - Datas.p_bat
                 else:
-                   prob += A_bat_a_var_ch[k] - A_bat_b_var_ch[k] == p_bat_ch[k] - Datas.p_bat
-                   prob += A_bat_a_var_dis[k] - A_bat_b_var_dis[k] == p_bat_dis[k] - 0
+                   prob += abs_bat_a_var_ch[k] - abs_bat_b_var_ch[k] == p_bat_ch[k] - Datas.p_bat
+                   prob += abs_bat_a_var_dis[k] - abs_bat_b_var_dis[k] == p_bat_dis[k] - 0
             
-            prob += A_bat_a_var_ch[k] <= flag_A_bat_a_var_ch[k] * Datas.P_BAT_VAR_MAX
-            prob += A_bat_b_var_ch[k] <= flag_A_bat_b_var_ch[k] * Datas.P_BAT_VAR_MAX
-            prob += flag_A_bat_a_var_ch[k] + flag_A_bat_b_var_ch[k] <= 1 # simultaneity
-            prob += A_bat_a_var_dis[k] <= flag_A_bat_a_var_dis[k] * Datas.P_BAT_VAR_MAX
-            prob += A_bat_b_var_dis[k] <= flag_A_bat_b_var_dis[k] * Datas.P_BAT_VAR_MAX
-            prob += flag_A_bat_a_var_dis[k] + flag_A_bat_b_var_dis[k] <= 1 # simultaneity
+            prob += abs_bat_a_var_ch[k] <= flag_abs_bat_a_var_ch[k] * Datas.P_BAT_VAR_MAX
+            prob += abs_bat_b_var_ch[k] <= flag_abs_bat_b_var_ch[k] * Datas.P_BAT_VAR_MAX
+            prob += flag_abs_bat_a_var_ch[k] + flag_abs_bat_b_var_ch[k] <= 1 # simultaneity
+            prob += abs_bat_a_var_dis[k] <= flag_abs_bat_a_var_dis[k] * Datas.P_BAT_VAR_MAX
+            prob += abs_bat_b_var_dis[k] <= flag_abs_bat_b_var_dis[k] * Datas.P_BAT_VAR_MAX
+            prob += flag_abs_bat_a_var_dis[k] + flag_abs_bat_b_var_dis[k] <= 1 # simultaneity
 
             # Battery SOC
             if k > 0:
@@ -296,16 +296,16 @@ class OptimizationMILP():
                 prob += soc_bat[k] == Datas.soc_bat
 
             # Absolute value between SOC and SOC_ref
-            prob += A_bat_a_soc[k] - A_bat_b_soc[k] == soc_bat[k] - Datas.SOC_BAT_REF
-            prob += A_bat_a_soc[k] <= flag_A_bat_a_soc
-            prob += A_bat_b_soc[k] <= flag_A_bat_b_soc
-            prob += flag_A_bat_a_soc[k] + flag_A_bat_b_soc[k] <= 1 # simultaneity
+            prob += abs_bat_a_soc[k] - abs_bat_b_soc[k] == soc_bat[k] - Datas.SOC_BAT_REF
+            prob += abs_bat_a_soc[k] <= flag_abs_bat_a_soc
+            prob += abs_bat_b_soc[k] <= flag_abs_bat_b_soc
+            prob += flag_abs_bat_a_soc[k] + flag_abs_bat_b_soc[k] <= 1 # simultaneity
 
             # Absolute value between k_pv and K_PV_REF
-            prob += A_k_pv_a_3th[k] - A_k_pv_b_3th[k] == k_pv[k] - Datas.K_PV_REF
-            prob += A_k_pv_a_3th[k] <= flag_A_k_pv_a_3th
-            prob += A_k_pv_b_3th[k] <= flag_A_k_pv_b_3th
-            prob += flag_A_k_pv_a_3th[k] + flag_A_k_pv_b_3th[k] <= 1 # simultaneity
+            prob += abs_k_pv_a_3th[k] - abs_k_pv_b_3th[k] == k_pv[k] - Datas.K_PV_REF
+            prob += abs_k_pv_a_3th[k] <= flag_abs_k_pv_a_3th
+            prob += abs_k_pv_b_3th[k] <= flag_abs_k_pv_b_3th
+            prob += flag_abs_k_pv_a_3th[k] + flag_abs_k_pv_b_3th[k] <= 1 # simultaneity
             
             
             # BALANÇO DE POTÊNCIA NO BARRAMENTO DC
