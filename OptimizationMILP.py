@@ -18,8 +18,8 @@ class OptimizationMILP():
         print("isolated Optimization in 3th")
         
         WEIGHT_K_PV      = 1
-        WEIGHT_DELTA_BAT = 1
-        WEIGHT_DELTA_BAT = 1
+        WEIGHT_VAR_P_BAT = 1
+        WEIGHT_VAR_P_BAT = 1
         WEIGHT_SOC_BAT   = 5
         
         ''' -------------------- Optimization Problem ---------------------------- '''
@@ -71,11 +71,10 @@ class OptimizationMILP():
         
         J_bat_var_soc = pl.lpSum([(abs_error_ref_soc_bat_a[k] + abs_error_ref_soc_bat_b[k])] for k in range(Datas.NP_3TH))
         
-        # Divide por 2 porque sao duas parcelas referente a mesma coisa
         # TODO: Dividir pelo máximo da parcela (Deve passar por normalização)
         objective_function = ( (WEIGHT_K_PV      * J_pv_3th          / 1)
-                             + (WEIGHT_DELTA_BAT * J_bat_var_ch  / 2)
-                             + (WEIGHT_DELTA_BAT * J_bat_var_dis / 2)
+                             + (WEIGHT_VAR_P_BAT * J_bat_var_ch  / 2)
+                             + (WEIGHT_VAR_P_BAT * J_bat_var_dis / 2)
                              + (WEIGHT_SOC_BAT   * J_bat_var_soc / 1)
                              )
         prob.setObjective(objective_function)
@@ -189,10 +188,11 @@ class OptimizationMILP():
     def isolated_optimization_2th(Datas: Datas, pv_forecasted: pd.DataFrame, load_forecasted: pd.DataFrame) -> tuple:
         print("isolated Optimization in 3th")
         
-        WEIGHT_K_PV      = 1
-        WEIGHT_DELTA_BAT = 1
-        WEIGHT_DELTA_BAT = 1
-        WEIGHT_REF_BAT   = 5
+        WEIGHT_K_PV = 1
+        WEIGHT_VAR_P_BAT = 1
+        WEIGHT_REF_P_BAT = 5
+        WEIGHT_REF_SOC_SC = 1
+        WEIGHT_VAR_P_SC = 0.01
         
         ''' -------------------- Optimization Problem ---------------------------- '''
         prob = pl.LpProblem("OptimizationMILP", pl.LpMinimize) # LpMinimize e LpMaximize
@@ -277,13 +277,18 @@ class OptimizationMILP():
         
         J_bat_ref_p_bat_dis = pl.lpSum([(abs_error_ref_p_bat_dis_a[k] + abs_error_ref_p_bat_dis_b[k])] for k in range(Datas.NP_2TH))
         
-        # Divide por 2 porque sao duas parcelas referente a mesma coisa
+        J_sc_ref_soc = pl.lpSum([(abs_error_ref_soc_sc_a[k] + abs_error_ref_soc_sc_b[k])] for k in range(Datas.NP_2TH))
+        
+        J_sc_var_ch = pl.lpSum([(abs_var_p_sc_ch_a[k] + abs_var_p_sc_ch_b[k])] for k in range(Datas.NP_2TH))
+        
+        J_sc_var_dis = pl.lpSum([(abs_var_p_sc_dis_a[k] + abs_var_p_sc_dis_b[k])] for k in range(Datas.NP_2TH))
+        
         # TODO: Dividir pelo máximo da parcela (Deve passar por normalização)
-        objective_function = ( (WEIGHT_K_PV      * J_pv_3th      / 1)
-                             + (WEIGHT_DELTA_BAT * J_bat_var_ch  / 2)
-                             + (WEIGHT_DELTA_BAT * J_bat_var_dis / 2)
-                             + (WEIGHT_REF_BAT   * J_bat_ref_p_bat_ch / 2)
-                             + (WEIGHT_REF_BAT   * J_bat_ref_p_bat_dis / 2)
+        objective_function = ( (WEIGHT_K_PV * J_pv_3th / 1)
+                             + (WEIGHT_VAR_P_BAT * (J_bat_var_ch + J_bat_var_dis) / 1)
+                             + (WEIGHT_REF_P_BAT * (J_bat_ref_p_bat_ch + J_bat_ref_p_bat_dis) / 1)
+                             + (WEIGHT_REF_SOC_SC * J_sc_ref_soc / 1)   
+                             + (WEIGHT_VAR_P_SC * (J_sc_var_ch + J_sc_var_dis) / 1)
                              )
         prob.setObjective(objective_function)
         
@@ -298,9 +303,14 @@ class OptimizationMILP():
         for k in range(0, Datas.NP_2TH):
             
             # P_bat
-            prob += p_bat_ch[k]  <= Datas.P_BAT_MAX * flag_ch_bat[k]
+            prob += p_bat_ch[k] <= Datas.P_BAT_MAX * flag_ch_bat[k]
             prob += p_bat_dis[k] <= Datas.P_BAT_MAX * flag_dis_bat[k]
             prob += flag_ch_bat[k] + flag_dis_bat[k] <= 1 # simultaneity      
+            
+            # p_sc
+            prob += p_sc_ch[k] <= Datas.P_SC_MAX * flag_ch_sc[k]
+            prob += p_sc_dis[k] <= Datas.P_SC_MAX * flag_dis_sc[k]
+            prob += flag_ch_sc[k] + flag_dis_sc[k] <= 1 # simultaneity
             
             if k == 0:
                 # SOC bat
@@ -319,8 +329,8 @@ class OptimizationMILP():
                     prob += abs_var_p_sc_ch_a[k] - abs_var_p_sc_ch_b == p_sc_ch[k] - 0
                     prob += abs_var_p_sc_dis_a[k] - abs_var_p_sc_dis_b == p_sc_dis[k] - Datas.p_sc
                 else:
-                    prob += abs_var_p_sc_ch_a[k] - abs_var_p_sc_ch_b == p_sc_ch[k] - 0
-                    prob += abs_var_p_sc_dis_a[k] - abs_var_p_sc_dis_b == p_sc_dis[k] - (-Datas.p_sc)
+                    prob += abs_var_p_sc_ch_a[k] - abs_var_p_sc_ch_b == p_sc_ch[k] - (-Datas.p_sc)
+                    prob += abs_var_p_sc_dis_a[k] - abs_var_p_sc_dis_b == p_sc_dis[k] - 0
             else:
                 # SOC bat
                 prob += soc_bat[k] == soc_bat[k-1] - (p_bat_dis[k-1] - p_bat_ch[k-1])*Datas.TS_2TH/Datas.Q_BAT
@@ -340,7 +350,6 @@ class OptimizationMILP():
             prob += abs_var_p_bat_dis_a[k] <= flag_abs_var_p_bat_dis_a[k] * Datas.P_BAT_VAR_MAX
             prob += abs_var_p_bat_dis_b[k] <= flag_abs_var_p_bat_dis_b[k] * Datas.P_BAT_VAR_MAX
             prob += flag_abs_var_p_bat_dis_a[k] + flag_abs_var_p_bat_dis_b[k] <= 1 # simultaneity
-            
 
             # Absolute value between p_bat and p_bat_sch
             # Charge
@@ -369,7 +378,7 @@ class OptimizationMILP():
             prob += flag_abs_var_p_sc_dis_a[k] + flag_abs_var_p_sc_dis_b[k] <= 1 # simultaneity
             
             # Absolute value between SOC and SOC_ref
-            prob += abs_error_ref_soc_sc_a[k] - abs_error_ref_soc_sc_b[k] == soc_bat[k] - Datas.SOC_SC_REF
+            prob += abs_error_ref_soc_sc_a[k] - abs_error_ref_soc_sc_b[k] == soc_sc[k] - Datas.SOC_SC_REF
             prob += abs_error_ref_soc_sc_a[k] <= flag_abs_error_ref_soc_sc_a
             prob += abs_error_ref_soc_sc_b[k] <= flag_abs_error_ref_soc_sc_b
             prob += flag_abs_error_ref_soc_sc_a[k] + flag_abs_error_ref_soc_sc_b[k] <= 1 # simultaneity
@@ -377,13 +386,13 @@ class OptimizationMILP():
             # BALANÇO DE POTÊNCIA NO BARRAMENTO DC
             prob += (
                     k_pv[k]*pv_forecasted.loc[k, 'data'] + 
-                    p_bat_dis[k]
+                    p_bat_dis[k] +
+                    p_sc_dis[k]
                     ==
                     load_forecasted.loc[k, 'data'] + 
+                    p_bat_ch[k] +
                     p_bat_ch[k]
-                    )        
-        
-        
+                    )
         
         ''' ------------------------------------------------------------------------------- 
         EXECUTA O ALGORITMO DE OTIMIZAÇÃO
@@ -403,21 +412,27 @@ class OptimizationMILP():
         ''' ------------------------------------------------------------------------------- 
         SALVA OS DADOS DA OTIMIZAÇÃO
         --------------------------------------------------------------------------------'''
+        # TODO: Save the test round by concatenating it with the previous
         # for k in range(0, Datas.NP_2TH):
         #     Datas.R_3th.loc[k , 'p_bat_sch']  = p_bat_dis[k].varValue - p_bat_ch[k].varValue
         #     Datas.R_3th.loc[k , 'k_pv_sch']   = k_pv[k].varvalue
-        results_3th = None
+        results_2th = None
         fo_value = None
         if pl.LpStatus[solution] == 'Optimal':
             print("OTIMO")
             # Results
-            results_3th = pd.DataFrame(index=range(Datas.NP_2TH), columns=['p_bat_sch', 'k_pv_sch', 'soc_bat'])
+            results_2th = pd.DataFrame(index=range(Datas.NP_2TH), columns=['p_bat_ref', 'k_pv_ref', 'p_sc_ref', 'soc_bat', 'soc_sc'])
             for k in range(0, Datas.NP_2TH):
-                results_3th.loc[k, 'p_bat_sch']   = p_bat_dis[k].varValue - p_bat_ch[k].varValue
-                results_3th.loc[k, 'k_pv_sch']    = k_pv[k].varValue
-                # results_3th.loc[0, 'p_grid_sch']  = p_grid.value[k]
-                results_3th.loc[k, 'soc_bat']    = soc_bat[k].varValue
+                # This values are for inverters reference
+                results_2th.loc[k, 'p_bat_ref'] = p_bat_dis[k].varValue - p_bat_ch[k].varValue
+                results_2th.loc[k, 'k_pv_ref'] = k_pv[k].varValue
+                # results_2th.loc[0, 'p_grid_sch']  = p_grid.value[k]
+                results_2th.loc[k, 'p_sc_ref'] = p_sc_dis[k].varValue - p_sc_ch[k].varValue
+                
+                # These values are for analysis only
+                results_2th.loc[k, 'soc_bat'] = soc_bat[k].varValue
+                results_2th.loc[k, 'soc_sc'] = soc_sc[k].varValue
         else:
             print("ENGASGOU")
 
-        return results_3th, fo_value
+        return results_2th, fo_value

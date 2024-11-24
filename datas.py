@@ -60,7 +60,7 @@ class Datas:
         self.SOC_SC_REF  = 0.5
         self.SOC_BAT_REF = 0.8
         self.K_PV_REF    = 1
-              
+           
         # Measurements (Init values)
         self.soc_bat = 0.65
         self.soc_sc  = float(0.5)
