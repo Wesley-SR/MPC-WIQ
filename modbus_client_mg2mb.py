@@ -14,9 +14,13 @@ import time
 from pyModbusTCP.client import ModbusClient
 import pandas as pd
 
+ISOLATED = 0
+CONNECTED = 1
+
+
 if __name__ == '__main__':
 
-    caminho_do_arquivo = "datas.csv"
+    caminho_do_arquivo = "datas_1_s_completo_SNPTEE.csv"
     
     # Faz a leitura do arquivo
     medidas_csv = pd.read_csv(caminho_do_arquivo)
@@ -31,29 +35,12 @@ if __name__ == '__main__':
         print("Error with host or port params")
     
     # Execution variables
-    Np_2th = 288
     counter_mb = 0
-    last_counter_mb = 0
+    last_counter_mb = - 1
     cmd_to_send_new_data = 0
     run = 0
-
-    # Wait for EMS_main command to start
-    # The control system will send new_mb_data = 0 to start communication
-    # while new_mb_data == 1:
-    #     registers = client.read_holding_registers(0, 2)
-    #     new_mb_data = int(registers[1])
-    #     time.sleep(0.5)
-    
-    
-    # counter_mb = int(registers[0])
-    # new_mb_data = 1
-    # p_pv = int((medidas_csv.loc[counter_mb, 'p_pv'])*1000)
-    # p_load = int((medidas_csv.loc[counter_mb, 'p_load'])*1000)
-    # data_to_write = [new_mb_data, p_pv, p_load]
-    # print("Send first data: {}  {}  {}".format(data_to_write[0], data_to_write[1], data_to_write[2]))
-    # # Write first new data
-    # client.write_multiple_registers(1, data_to_write)
-    
+    operation_mode = ISOLATED
+  
     run = 1
     #except Exception as e:
     #    print("Erro de conexao devido: {}".format(e))
@@ -71,11 +58,19 @@ if __name__ == '__main__':
         if (counter_mb != last_counter_mb) and (cmd_to_send_new_data == 1):                 
             last_counter_mb = counter_mb
             cmd_to_send_new_data = 0
+            
+            # Read p_pv
             p_pv = int((medidas_csv.loc[counter_mb, 'p_pv'])*1000)
+            # Read p_load
             p_load = int((medidas_csv.loc[counter_mb, 'p_load'])*1000)
-            data_to_write = [cmd_to_send_new_data, p_pv, p_load]
-            print("Send data: cmd_to_send_new_data: {}, p_pv: {}, p_load: {}".format(data_to_write[0], data_to_write[1], data_to_write[2]))
-            client.write_multiple_registers(1, data_to_write) # mg2bm doesn't touch the counter_mb
+            # Read p_bat
+            # Read p_sc
+            # Read p_grid
+            # Read soc_bat
+            # Read soc_sc
+            data_to_write = [cmd_to_send_new_data, operation_mode, p_pv, p_load]
+            print(f"Send data: cmd_to_send_new_data: {data_to_write[0]}, operation_mode: {data_to_write[1]}, p_pv: {data_to_write[2]}, p_load: {data_to_write[3]}")
+            client.write_multiple_registers(1, data_to_write) # mg2bm doesn't touch the counter_mb (register[0])
             
             
         

@@ -12,25 +12,21 @@ import matplotlib.pyplot as plt
 class Datas:
     def __init__(self):
         
-        self.M = pd.read_csv("datas.csv", index_col='t')
+        self.M = pd.read_csv("datas_1_s_completo_SNPTEE.csv", index_col='time')
         
         # Operation mode
         # self.operation_mode = "CONNECTED"
         self.operation_mode = "ISOLATED"
         
         # Optmization method
-        self.optimization_method = "QP"
-        # self.optimization_method = "MILP"
-        
-        # Paths for files
-        self.pv_path = "PV_model"
-        self.load_path = "Load_model"
+        # self.optimization_method = "QP"
+        self.optimization_method = "MILP"
         
         # Time constants
         self.NP_2TH         = 15 # seconds
         self.NP_3TH         = 96 # minutes
         self.TS_2TH         = 1 # seconds
-        self.TS_3TH         = 1 # seconds
+        self.TS_3TH         = 900 # seconds, 900 s = 15 m
         self.TS_MEASUREMENT = 1 # seconds
         self.TS_FORECAST    = 1 # minutes
         self.TIME_SLEEP     = 0.3 # seconds

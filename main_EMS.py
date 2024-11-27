@@ -42,7 +42,7 @@ class EMS():
         self.enable_run_2th = False
         
         # Timers
-        self.t = 96 # Time that start in matrix M (in simulation)
+        self.t = 96*60 # Time that start in matrix M (in simulation)
         # Last Timers
         self.last_time_measurement = 0
         self.last_time_2th = 0
@@ -67,7 +67,6 @@ class EMS():
         self.counter_mb = 0
 
         # DataFrame for forecast
-        
         self.pv_forecasted = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['data'])
         self.load_forecasted = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['data'])
         # DataFrame for past datas
@@ -98,7 +97,7 @@ class EMS():
         
         while self.enable_run_EMS:
 
-            print(f"t = {self.t}")    
+            print(f"t = {self.t}") 
 
             # Take measurements
             if (self.is_it_time_to_take_measurements()):
@@ -191,8 +190,8 @@ class EMS():
 
     # Check if is time to take new measumerements for microgrid via Mudbus
     def is_it_time_to_take_measurements(self) -> bool: 
-        current_time = time.time()
-        
+        # current_time = time.time()
+        current_time = self.t
         if (current_time - self.last_time_measurement >= self.Datas.TS_MEASUREMENT):
             print("It's time to measurement")
             self.last_time_measurement = current_time
@@ -203,7 +202,8 @@ class EMS():
 
 
     def is_it_time_to_run_3th(self) -> bool:
-        current_time = time.time()
+        # current_time = time.time() # For real control
+        current_time = self.t # For simulation
         if (current_time - self.last_time_3th >= self.Datas.TS_3TH):
             print("It's time to 3th")
             self.last_time_3th = current_time
@@ -214,7 +214,8 @@ class EMS():
 
 
     def is_it_time_to_run_2th(self) -> bool:
-        current_time = time.time()
+        # current_time = time.time() # For real control
+        current_time = self.t # For simulation
         if (current_time - self.last_time_2th >= self.Datas.TS_2TH):
             print("It's time to 2th")
             self.last_time_2th = current_time
@@ -279,13 +280,13 @@ class EMS():
         self.modbus_client.write_multiple_registers(0, [self.counter_mb, cmd_to_send_new_data])
         time.sleep(0.100)
         
-        while wait_for_new_data == 0:
+        while wait_for_new_data == 1:
             print("Waiting for datas")
             registers = self.modbus_client.read_holding_registers(0, 9)
             
             # Check if we have new data
             cmd_to_send_new_data = int(registers[1])
-            if cmd_to_send_new_data == 1:
+            if cmd_to_send_new_data == 0:
                 
                 # Operation mode
                 if (registers[2] == 1):
@@ -315,9 +316,9 @@ class EMS():
                 
                 self.counter_mb += 1
                 wait_for_new_data = 0
-                
+
             time.sleep(0.5)
-        
+
 
 
     def send_control_signals(self) -> None:
@@ -325,8 +326,8 @@ class EMS():
                            self.Datas.R_2th.loc['p_sc_2th', 0],
                            self.Datas.R_2th.loc['p_grid_2th', 0],
                            self.Datas.R_2th.loc['k_pv', 0]]
-        # self.modbus_client.write_multiple_registers(10, control_signals)
-    
+        self.modbus_client.write_multiple_registers(10, control_signals)
+
 
 
 
