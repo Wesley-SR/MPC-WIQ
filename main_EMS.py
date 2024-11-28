@@ -230,14 +230,14 @@ class EMS():
         results_3th = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['p_bat_sch', 'k_pv_sch'])
         OF_3th      = 0
         # Call optimization
-        if (self.Datas.operation_mode == "CONNECTED"):
+        if (self.Datas.operation_mode == self.Datas.CONNECTED):
             if (self.Datas.optimization_method == "QP"):
                 results_3th, OF_3th = self.qp_optimization.connected_optimization_3th(self.Datas, self.pv_forecasted, self.load_forecasted)
             elif(self.Datas.optimization_method == "MILP"):
                 # self.milp_optimization.connected_optimization_3th()
                 print("Dont have connected MILP")
 
-        elif (self.Datas.operation_mode == "ISOLATED"):
+        elif (self.Datas.operation_mode == self.Datas.ISOLATED):
             if (self.Datas.optimization_method == "QP"):
                 results_3th, OF_3th = self.qp_optimization.isolated_optimization_3th(self.Datas, self.pv_forecasted, self.load_forecasted)
             elif (self.Datas.optimization_method == "MILP"):
@@ -257,13 +257,13 @@ class EMS():
         self.Datas.I_2th.loc[:, 'load_forecasted'] = self.Datas.p_load
         
         # Call optimization
-        if (self.Datas.operation_mode == "CONNECTED"):
+        if (self.Datas.operation_mode == self.Datas.CONNECTED):
             if (self.Datas.optimization_method == "QP"):
                 self.qp_optimization.connected_optimization_2th(self.Datas)
             elif (self.Datas.optimization_method == "MILP"):
                 print("TODO: MILP Optimization")
                 pass
-        elif (self.Datas.operation_mode == "ISOLATED"):
+        elif (self.Datas.operation_mode == self.Datas.ISOLATED):
             if (self.Datas.optimization_method == "QP"):
                 self.qp_optimization.isolated_optimization_2th(self.Datas)
             elif (self.Datas.optimization_method == "MILP"):
@@ -290,9 +290,9 @@ class EMS():
                 
                 # Operation mode
                 if (registers[2] == 1):
-                    self.Datas.operation_mode = "CONNECTED"
+                    self.Datas.operation_mode = self.Datas.CONNECTED
                 else:
-                    self.Datas.operation_mode = "ISOLATED"
+                    self.Datas.operation_mode = self.Datas.ISOLATED
                 
                 # Datas from microgrid
                 self.measurements["p_pv"]         = registers[3]/1000

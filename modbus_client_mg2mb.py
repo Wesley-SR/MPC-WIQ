@@ -13,15 +13,13 @@ import time
 
 from pyModbusTCP.client import ModbusClient
 import pandas as pd
-
-ISOLATED = 0
-CONNECTED = 1
+from datas import Datas
 
 
 if __name__ == '__main__':
 
     caminho_do_arquivo = "datas_1_s_completo_SNPTEE.csv"
-    
+    Datas = Datas()
     # Faz a leitura do arquivo
     medidas_csv = pd.read_csv(caminho_do_arquivo)
     
@@ -39,7 +37,7 @@ if __name__ == '__main__':
     last_counter_mb = - 1
     cmd_to_send_new_data = 0
     run = 0
-    operation_mode = ISOLATED
+    operation_mode = Datas.operation_mode
   
     run = 1
     #except Exception as e:

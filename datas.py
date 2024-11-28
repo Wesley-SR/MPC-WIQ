@@ -9,14 +9,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
+
 class Datas:
     def __init__(self):
         
         self.M = pd.read_csv("datas_1_s_completo_SNPTEE.csv", index_col='time')
         
         # Operation mode
-        # self.operation_mode = "CONNECTED"
-        self.operation_mode = "ISOLATED"
+        self.ISOLATED = 0
+        self.CONNECTED = 1
+        # self.operation_mode = CONNECTED
+        self.operation_mode = self.CONNECTED
         
         # Optmization method
         # self.optimization_method = "QP"
