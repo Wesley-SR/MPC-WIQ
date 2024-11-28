@@ -322,10 +322,10 @@ class EMS():
 
 
     def send_control_signals(self) -> None:
-        control_signals = [self.Datas.R_2th.loc['p_bat_2th', 0],
-                           self.Datas.R_2th.loc['p_sc_2th', 0],
-                           self.Datas.R_2th.loc['p_grid_2th', 0],
-                           self.Datas.R_2th.loc['k_pv', 0]]
+        control_signals = [self.Datas.R_2th.loc['p_bat_ref', 0],
+                           self.Datas.R_2th.loc['p_sc_ref', 0],
+                           self.Datas.R_2th.loc['p_grid_ref', 0],
+                           self.Datas.R_2th.loc['k_pv_ref', 0]]
         self.modbus_client.write_multiple_registers(10, control_signals)
 
 

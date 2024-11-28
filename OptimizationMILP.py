@@ -414,8 +414,8 @@ class OptimizationMILP():
         --------------------------------------------------------------------------------'''
         # TODO: Save the test round by concatenating it with the previous
         # for k in range(0, Datas.NP_2TH):
-        #     Datas.R_3th.loc[k , 'p_bat_sch']  = p_bat_dis[k].varValue - p_bat_ch[k].varValue
-        #     Datas.R_3th.loc[k , 'k_pv_sch']   = k_pv[k].varvalue
+        #     Datas.R_2th.loc[k , 'p_bat_ref']  = p_bat_dis[k].varValue - p_bat_ch[k].varValue
+        #     Datas.R_2th.loc[k , 'k_pv_ref']   = k_pv[k].varvalue
         results_2th = None
         fo_value = None
         if pl.LpStatus[solution] == 'Optimal':

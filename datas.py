@@ -129,11 +129,11 @@ class Datas:
                                    })
         
         # Result of optimization
-        self.R_2th = pd.DataFrame({'p_bat_2th': [0.0]*self.NP_2TH,
-                                   'p_sc_2th': [0.0]*self.NP_2TH,
-                                   'p_grid_2th': [0.0]*self.NP_2TH,
+        self.R_2th = pd.DataFrame({'p_bat_ref': [0.0]*self.NP_2TH,
+                                   'p_sc_ref': [0.0]*self.NP_2TH,
+                                   'p_grid_ref': [0.0]*self.NP_2TH,
                                    'soc_bat_2th': [0.0]*self.NP_2TH,
-                                   'k_pv_2th': [0.0]*self.NP_2TH,
+                                   'k_pv_ref': [0.0]*self.NP_2TH,
                                    'FO_2th': [0.0]*self.NP_2TH})
         
         self.update_past_datas()

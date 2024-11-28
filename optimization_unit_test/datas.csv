@@ -1,4 +1,4 @@
-t,time,counter_mb,new_mb_data,operation_mode,p_pv,p_load,p_grid,p_bat,p_sc,soc_bat,soc_sc,cs_p_bat,cs_p_sc,cs_p_grid,cs_k_pv
+t,time,counter_mb,new_mb_data,operation_mode,p_pv,p_load,p_grid,p_bat,p_sc,soc_bat,soc_sc,p_bat_ref,p_sc_ref,p_grid_ref,k_pv_ref
 0,1/1/2024 0:00,0,0,0,0,0.297575126,0,0,0,0,0,0,0,0,0
 1,1/1/2024 0:15,0,0,0,0,0.31626056,0,0,0,0,0,0,0,0,0
 2,1/1/2024 0:30,0,0,0,0,0.331059424,0,0,0,0,0,0,0,0,0
