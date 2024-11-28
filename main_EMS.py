@@ -295,24 +295,24 @@ class EMS():
                     self.Datas.operation_mode = self.Datas.ISOLATED
                 
                 # Datas from microgrid
-                self.measurements["p_pv"]         = registers[3]/1000
-                self.measurements["p_load"]       = registers[4]/1000
-                self.measurements["p_grid"]       = registers[5]/1000
-                self.measurements["p_bat"]        = registers[6]/1000
-                self.measurements["p_sc"]         = registers[7]/1000
-                self.measurements["soc_bat"]      = registers[8]/1000
-                self.measurements["soc_sc"]       = registers[9]/1000
+                self.Datas.p_pv         = registers[3]/1000
+                self.Datas.p_load       = registers[4]/1000
+                self.Datas.p_grid       = registers[5]/1000
+                self.Datas.p_bat        = registers[6]/1000
+                self.Datas.p_sc         = registers[7]/1000
+                self.Datas.soc_bat      = registers[8]/1000
+                self.Datas.soc_sc       = registers[9]/1000
                 
                 print("Measurements")
                 print(f'cmd_to_send_new_data:    {cmd_to_send_new_data}')
                 print(f'operation_mode: {self.Datas.operation_mode}')
-                print(f'p_pv:    {self.measurements["p_pv"]}')
-                print(f'p_load:  {self.measurements["p_load"]}')
-                print(f'p_grid:  {self.measurements["p_grid"]}')
-                print(f'p_bat:   {self.measurements["p_bat"]}')
-                print(f'p_sc:    {self.measurements["p_sc"]}')
-                print(f'soc_bat: {self.measurements["soc_bat"]}')
-                print(f'soc_sc:  {self.measurements["soc_sc"]} \n')
+                print(f'p_pv:    {self.Datas.p_pv}')
+                print(f'p_load:  {self.Datas.p_load}')
+                print(f'p_grid:  {self.Datas.p_grid}')
+                print(f'p_bat:   {self.Datas.p_bat}')
+                print(f'p_sc:    {self.Datas.p_sc}')
+                print(f'soc_bat: {self.Datas.soc_bat}')
+                print(f'soc_sc:  {self.Datas.soc_sc} \n')
                 
                 self.counter_mb += 1
                 wait_for_new_data = 0
