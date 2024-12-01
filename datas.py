@@ -13,7 +13,18 @@ import matplotlib.pyplot as plt
 class Datas:
     def __init__(self):
         
-        self.M = pd.read_csv("datas_1_s_completo_SNPTEE.csv", index_col='time')
+        self.M = pd.read_csv("datas_1_s_completo_SNPTEE.csv")
+        print(f"colunas: {self.M.columns}")
+
+        self.M['p_grid'] = self.M['p_grid'].astype('float64')
+        self.M['p_bat'] = self.M['p_bat'].astype('float64')
+        self.M['p_sc'] = self.M['p_sc'].astype('float64')
+        self.M['soc_bat'] = self.M['soc_bat'].astype('float64')
+        self.M['soc_sc'] = self.M['soc_sc'].astype('float64')
+        self.M['p_bat_ref'] = self.M['p_bat_ref'].astype('float64')
+        self.M['p_sc_ref'] = self.M['p_sc_ref'].astype('float64')
+        self.M['p_grid_ref'] = self.M['p_grid_ref'].astype('float64')
+        self.M['k_pv_ref'] = self.M['k_pv_ref'].astype('float64')
 
         # Operation mode
         self.ISOLATED = 0
@@ -69,6 +80,10 @@ class Datas:
         self.p_grid  = 0
         self.p_bat   = 0
         self.p_sc    = 0
+        
+        # Tell us if is negative value
+        self.p_bat_neg = 0
+        self.p_sc_neg = 0
         
         # Scheduled (Calculated by 3th)
         self.p_bat_sch     = 0

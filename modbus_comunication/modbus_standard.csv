@@ -1,5 +1,5 @@
-Registrador,0,1,2,3,4,5,6,7,8,9,10,11,12,13
-Descricao,counter_mb,new_mb_data,operation_mode,p_pv,p_load,p_grid,p_bat,p_sc,soc_bat,soc_sc,p_bat_ref,p_sc_ref,p_grid_ref,k_pv_ref
-Data 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-Data 2,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-Data 3,,,,,,,,,,,,,,
+Registrador,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17
+Descricao,counter_mb,new_mb_data,operation_mode,p_pv,p_load,p_grid,p_bat,p_sc,soc_bat,soc_sc,p_bat_neg,p_sc_neg,p_bat_ref,p_sc_ref,p_grid_ref,k_pv_ref,p_bat_ref_neg,p_sc_ref_neg
+Data 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Data 2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Data 3,,,,,,,,,,,,,,,,,,

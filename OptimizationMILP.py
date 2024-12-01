@@ -146,7 +146,7 @@ class OptimizationMILP():
         ''' ------------------------------------------------------------------------------- 
         EXECUTA O ALGORITMO DE OTIMIZAÇÃO
         --------------------------------------------------------------------------------'''
-        print("\nEXECUTAR SOLVER\n")
+        print("EXECUTAR SOLVER")
         solution  = prob.solve(solver)
         fo_status = pl.LpStatus[solution]
         fo_value = pl.value(prob.objective)
@@ -182,17 +182,17 @@ class OptimizationMILP():
 
 
     ''' ------------------------------------------------------------------------------- 
-    isolated Optimization 3th
+    isolated Optimization 2th
     --------------------------------------------------------------------------------'''
     @staticmethod
     def isolated_optimization_2th(Datas: Datas, pv_forecasted: pd.DataFrame, load_forecasted: pd.DataFrame) -> tuple:
-        print("isolated Optimization in 3th")
+        print("isolated Optimization in 2th")
         
         WEIGHT_K_PV = 1
-        WEIGHT_VAR_P_BAT = 1
+        WEIGHT_VAR_P_BAT = 2
         WEIGHT_REF_P_BAT = 5
         WEIGHT_REF_SOC_SC = 1
-        WEIGHT_VAR_P_SC = 0.01
+        WEIGHT_VAR_P_SC = 0.00001
         
         ''' -------------------- Optimization Problem ---------------------------- '''
         prob = pl.LpProblem("OptimizationMILP", pl.LpMinimize) # LpMinimize e LpMaximize
@@ -317,7 +317,7 @@ class OptimizationMILP():
                 prob += soc_bat[k] == Datas.soc_bat
                 # var p_bat
                 if Datas.p_bat >= 0:
-                   prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == p_bat_ch[k] - 0
+                   prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == (p_bat_ch[k] - 0)
                    prob += abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k] == p_bat_dis[k] - Datas.p_bat
                 else:
                    prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == p_bat_ch[k] - (-Datas.p_bat)
@@ -335,8 +335,8 @@ class OptimizationMILP():
                 # SOC bat
                 prob += soc_bat[k] == soc_bat[k-1] - (p_bat_dis[k-1] - p_bat_ch[k-1])*Datas.TS_2TH/Datas.Q_BAT
                 # var p_bat
-                prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == p_bat_ch[k] - p_bat_ch[k-1]
-                prob += abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k] == p_bat_dis[k] - p_bat_dis[k-1]
+                prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == p_bat_ch[k] - p_bat_ch[k-10] # + (abs_var_p_bat_ch_a[k-1] - abs_var_p_bat_ch_b[k-1]) # Como penalizar a variacao
+                prob += abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k] == p_bat_dis[k] - p_bat_dis[k-1] # + (abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k])
                 # SOC sc
                 prob += soc_sc[k] == soc_sc[k-1] - (p_sc_dis[k-1] - p_sc_ch[k-1])*Datas.TS_2TH/Datas.Q_SC
                 # vat p_sc
@@ -397,7 +397,7 @@ class OptimizationMILP():
         ''' ------------------------------------------------------------------------------- 
         EXECUTA O ALGORITMO DE OTIMIZAÇÃO
         --------------------------------------------------------------------------------'''
-        print("\nEXECUTAR SOLVER\n")
+        print("EXECUTAR SOLVER 2th")
         solution  = prob.solve(solver)
         fo_status = pl.LpStatus[solution]
         fo_value = pl.value(prob.objective)
