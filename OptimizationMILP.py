@@ -189,8 +189,8 @@ class OptimizationMILP():
         print("isolated Optimization in 2th")
         
         WEIGHT_K_PV = 1
-        WEIGHT_VAR_P_BAT = 2
-        WEIGHT_REF_P_BAT = 5
+        WEIGHT_VAR_P_BAT = 5
+        WEIGHT_REF_P_BAT = 1
         WEIGHT_REF_SOC_SC = 1
         WEIGHT_VAR_P_SC = 0.00001
         
@@ -335,7 +335,7 @@ class OptimizationMILP():
                 # SOC bat
                 prob += soc_bat[k] == soc_bat[k-1] - (p_bat_dis[k-1] - p_bat_ch[k-1])*Datas.TS_2TH/Datas.Q_BAT
                 # var p_bat
-                prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == p_bat_ch[k] - p_bat_ch[k-10] # + (abs_var_p_bat_ch_a[k-1] - abs_var_p_bat_ch_b[k-1]) # Como penalizar a variacao
+                prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == p_bat_ch[k] - p_bat_ch[k-1] # + (abs_var_p_bat_ch_a[k-1] - abs_var_p_bat_ch_b[k-1]) # Como penalizar a variacao
                 prob += abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k] == p_bat_dis[k] - p_bat_dis[k-1] # + (abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k])
                 # SOC sc
                 prob += soc_sc[k] == soc_sc[k-1] - (p_sc_dis[k-1] - p_sc_ch[k-1])*Datas.TS_2TH/Datas.Q_SC
