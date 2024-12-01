@@ -72,7 +72,7 @@ class OptimizationMILP():
         J_bat_var_soc = pl.lpSum([(abs_error_ref_soc_bat_a[k] + abs_error_ref_soc_bat_b[k])] for k in range(Datas.NP_3TH))
         
         # TODO: Dividir pelo máximo da parcela (Deve passar por normalização)
-        objective_function = ( (WEIGHT_K_PV      * J_pv_3th          / 1)
+        objective_function = ( (WEIGHT_K_PV      * J_pv_3th      / 1)
                              + (WEIGHT_VAR_P_BAT * J_bat_var_ch  / 2)
                              + (WEIGHT_VAR_P_BAT * J_bat_var_dis / 2)
                              + (WEIGHT_SOC_BAT   * J_bat_var_soc / 1)
@@ -115,7 +115,7 @@ class OptimizationMILP():
 
             # Battery SOC
             if k > 0:
-                prob += soc_bat[k] == soc_bat[k-1] - (p_bat_dis[k-1] - p_bat_ch[k-1])*Datas.TS_3TH/Datas.Q_BAT
+                prob += soc_bat[k] == soc_bat[k-1] - (p_bat_dis[k-1] - p_bat_ch[k-1])*(Datas.TS_3TH/60/60)/Datas.Q_BAT
             else:
                 prob += soc_bat[k] == Datas.soc_bat
 
@@ -169,11 +169,11 @@ class OptimizationMILP():
         if pl.LpStatus[solution] == 'Optimal':
             print("OTIMO")
             # Results
-            results_3th = pd.DataFrame(index=range(Datas.NP_3TH), columns=['p_bat_sch', 'k_pv_sch', 'soc_bat'])
+            results_3th = pd.DataFrame(index=range(Datas.NP_3TH), columns=['p_bat_sch', 'k_pv_sch', 'p_grid_sch', 'soc_bat'])
             for k in range(0, Datas.NP_3TH):
                 results_3th.loc[k, 'p_bat_sch']   = p_bat_dis[k].varValue - p_bat_ch[k].varValue
                 results_3th.loc[k, 'k_pv_sch']    = k_pv[k].varValue
-                # results_3th.loc[0, 'p_grid_sch']  = p_grid.value[k]
+                results_3th.loc[0, 'p_grid_sch']  = 0
                 results_3th.loc[k, 'soc_bat']    = soc_bat[k].varValue
         else:
             print("ENGASGOU")
@@ -417,22 +417,26 @@ class OptimizationMILP():
         #     Datas.R_2th.loc[k , 'p_bat_ref']  = p_bat_dis[k].varValue - p_bat_ch[k].varValue
         #     Datas.R_2th.loc[k , 'k_pv_ref']   = k_pv[k].varvalue
         results_2th = None
-        fo_value = None
         if pl.LpStatus[solution] == 'Optimal':
             print("OTIMO")
             # Results
-            results_2th = pd.DataFrame(index=range(Datas.NP_2TH), columns=['p_bat_ref', 'k_pv_ref', 'p_sc_ref', 'soc_bat', 'soc_sc'])
+            results_2th = pd.DataFrame(index=range(Datas.NP_2TH), columns=['p_bat_ref', 'k_pv_ref', 'p_grid_ref', 'p_sc_ref', 'soc_bat', 'soc_sc'])
             for k in range(0, Datas.NP_2TH):
                 # This values are for inverters reference
                 results_2th.loc[k, 'p_bat_ref'] = p_bat_dis[k].varValue - p_bat_ch[k].varValue
                 results_2th.loc[k, 'k_pv_ref'] = k_pv[k].varValue
-                # results_2th.loc[0, 'p_grid_sch']  = p_grid.value[k]
+                results_2th.loc[k, 'p_grid_ref']  = 0
                 results_2th.loc[k, 'p_sc_ref'] = p_sc_dis[k].varValue - p_sc_ch[k].varValue
                 
                 # These values are for analysis only
                 results_2th.loc[k, 'soc_bat'] = soc_bat[k].varValue
                 results_2th.loc[k, 'soc_sc'] = soc_sc[k].varValue
+                # Verifica se existe algum NaN
+            existe_nan = results_2th.isna().any().any()
+            if existe_nan:
+                print(f"Error. NaN in results_2th")  # True se houver NaN, False caso contrário
+                print(results_2th)
         else:
-            print("ENGASGOU")
+            print("Error. ENGASGOU in isolated_optimization_2th")
 
         return results_2th, fo_value

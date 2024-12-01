@@ -14,12 +14,12 @@ class Datas:
     def __init__(self):
         
         self.M = pd.read_csv("datas_1_s_completo_SNPTEE.csv", index_col='time')
-        
+
         # Operation mode
         self.ISOLATED = 0
         self.CONNECTED = 1
         # self.operation_mode = CONNECTED
-        self.operation_mode = self.CONNECTED
+        self.operation_mode = self.ISOLATED
         
         # Optmization method
         # self.optimization_method = "QP"
@@ -37,15 +37,15 @@ class Datas:
         # Technical specification constants
         # bat
         self.Q_BAT         = int(120)
-        self.SOC_BAT_MIN   = 0.2
+        self.SOC_BAT_MIN   = float(0.2)
         self.SOC_BAT_MAX   = float(0.95)
         self.P_BAT_MAX     = int(20)
         self.P_BAT_MIN     = int(-20)
         self.P_BAT_VAR_MAX = int(50)
         self.P_BAT_VAR_MIN = int(50)
         # sc
-        self.Q_SC         = int(0.289)
-        self.SOC_SC_MIN = 0.2
+        self.Q_SC         = float(0.289)
+        self.SOC_SC_MIN = float(0.2)
         self.SOC_SC_MAX = float(0.95)
         self.P_SC_MAX   = int(50)
         self.P_SC_MIN   = int(-50)
@@ -61,13 +61,14 @@ class Datas:
         self.K_PV_REF    = 1
            
         # Measurements (Init values)
-        self.soc_bat = 0.65
-        self.soc_sc  = float(0.5)
-        self.p_pv    = float(0)
-        self.p_load  = float(0.5)
-        self.p_grid  = float(0)
-        self.p_bat   = float(0)
-        self.p_sc    = float(0)
+        self.soc_bat = 0.6
+        self.soc_sc  = 0.7
+        self.k_pv    = 1
+        self.p_pv    = 0
+        self.p_load  = 0
+        self.p_grid  = 0
+        self.p_bat   = 0
+        self.p_sc    = 0
         
         # Scheduled (Calculated by 3th)
         self.p_bat_sch     = 0
@@ -81,29 +82,25 @@ class Datas:
         self.p_grid_ref = 0
         self.k_pv_ref   = 0
         
+        self.MB_MULTIPLIER = 1000
+        
         
         
         ''' ------------------- Matrices for 3th ------------------- '''
-        self.P_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
-                                   'p_load': [0.0]*self.NP_3TH})
+       
+        # # Input for optimization
+        # self.I_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
+        #                            'tariff_pur': [0.5]*self.NP_3TH,
+        #                            'tariff_sale': [0.5]*self.NP_3TH,
+        #                            'p_load': [0.0]*self.NP_3TH,
+        #                            })
         
-        # Forecast
-        self.F_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
-                                   'p_load': [0.0]*self.NP_3TH})
-        
-        # Input for optimization
-        self.I_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
-                                   'tariff_pur': [0.5]*self.NP_3TH,
-                                   'tariff_sale': [0.5]*self.NP_3TH,
-                                   'p_load': [0.0]*self.NP_3TH,
-                                   })
-        
-        # Result of optimization
-        self.R_3th = pd.DataFrame({'p_bat_3th': [0.0]*self.NP_3TH,
-                                   'p_grid_3th': [0.0]*self.NP_3TH,
-                                   'soc_bat_3th': [0.0]*self.NP_3TH,
-                                   'k_pv_3th': [0.0]*self.NP_3TH,
-                                   'FO_3th': [0.0]*self.NP_3TH})
+        # # Result of optimization
+        # self.R_3th = pd.DataFrame({'p_bat_3th': [0.0]*self.NP_3TH,
+        #                            'p_grid_3th': [0.0]*self.NP_3TH,
+        #                            'soc_bat_3th': [0.0]*self.NP_3TH,
+        #                            'k_pv_3th': [0.0]*self.NP_3TH,
+        #                            'FO_3th': [0.0]*self.NP_3TH})
         
         # Main
         # self.M_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
@@ -114,19 +111,19 @@ class Datas:
         
         
         ''' ------------------- Matrices for 2th ------------------- '''
-        self.P_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
-                                   'p_load': [0.0]*self.NP_2TH})
+        # self.P_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
+        #                            'p_load': [0.0]*self.NP_2TH})
         
-        self.F_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
-                                   'p_load': [0.0]*self.NP_2TH})
+        # self.F_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
+        #                            'p_load': [0.0]*self.NP_2TH})
         
-        # Input for optimization
-        self.I_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
-                                   'p_load': [0.0]*self.NP_2TH,
-                                   'tariff_pur': [0.0]*self.NP_2TH,
-                                   'tariff_sale': [0.0]*self.NP_2TH,
-                                   'p_bat_ref': [0.0]*self.NP_2TH
-                                   })
+        # # Input for optimization
+        # self.I_2th = pd.DataFrame({'p_pv': [0.0]*self.NP_2TH,
+        #                            'p_load': [0.0]*self.NP_2TH,
+        #                            'tariff_pur': [0.0]*self.NP_2TH,
+        #                            'tariff_sale': [0.0]*self.NP_2TH,
+        #                            'p_bat_ref': [0.0]*self.NP_2TH
+        #                            })
         
         # Result of optimization
         self.R_2th = pd.DataFrame({'p_bat_ref': [0.0]*self.NP_2TH,
@@ -136,16 +133,14 @@ class Datas:
                                    'k_pv_ref': [0.0]*self.NP_2TH,
                                    'FO_2th': [0.0]*self.NP_2TH})
         
-        self.update_past_datas()
+        # self.update_past_datas()
 
 
-    def update_past_datas(self) -> None:
-        # print(self.M)
+    # def update_past_datas(self) -> None:
+    #     # print(self.M)
         
-        self.P_3th.loc[0:self.NP_3TH-1, 'p_pv'] = self.M.loc[0:self.NP_3TH-1, 'p_pv']
-        self.P_3th.loc[0:self.NP_3TH-1, 'p_load'] = self.M.loc[0:self.NP_3TH-1, 'p_load']
-            
-        
+    #     self.P_3th.loc[0:self.NP_3TH-1, 'p_pv'] = self.M.loc[0:self.NP_3TH-1, 'p_pv']
+    #     self.P_3th.loc[0:self.NP_3TH-1, 'p_load'] = self.M.loc[0:self.NP_3TH-1, 'p_load']
         # plt.figure(figsize=(10, 5))
         # time_steps = list(range(self.NP_3TH))
         # plt.plot(time_steps, self.P_3th['p_pv'].values)
