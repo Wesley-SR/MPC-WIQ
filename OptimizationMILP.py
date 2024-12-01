@@ -191,7 +191,7 @@ class OptimizationMILP():
         WEIGHT_K_PV = 1
         WEIGHT_VAR_P_BAT = 5
         WEIGHT_REF_P_BAT = 1
-        WEIGHT_REF_SOC_SC = 1
+        WEIGHT_REF_SOC_SC = 0.01
         WEIGHT_VAR_P_SC = 0.00001
         
         ''' -------------------- Optimization Problem ---------------------------- '''
