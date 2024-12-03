@@ -41,6 +41,8 @@ class EMS():
         self.enable_run_3th = True
         self.enable_run_2th = True
         self.enable_plot = False
+        self.enable_save_plot = False
+        self.path_to_plot = "C:\\Users\\wesle\\Desktop\\Plots\\"
         
         # Timers
         self.t = 0 # Time that start in matrix M (in simulation)
@@ -78,7 +80,7 @@ class EMS():
         # Create DataFrame for past datas
         self.p_pv_past_3th = pd.read_csv("data_pv_15_min_past.csv", index_col='time')
         self.p_load_past_3th = pd.read_csv("data_load_15_min_past.csv", index_col='time')
-        if self.enable_plot:
+        if self.enable_plot or self.enable_save_plot:
             plt.figure(figsize=(10, 5))
             time_steps = list(range(self.Datas.NP_3TH))
             plt.plot(time_steps, self.p_pv_past_3th['data'].values, label = 'p_pv_past_3th')
@@ -86,6 +88,8 @@ class EMS():
             plt.title('Passado')
             plt.legend()
             plt.grid()
+            if (self.enable_save_plot):
+                plt.savefig(f'{self.path_to_plot}Passado.png')
         
         # Create DataFrame for forecast
         self.pv_forecasted_2th = pd.DataFrame(index=range(self.Datas.NP_2TH), columns=['data'])
@@ -103,7 +107,7 @@ class EMS():
     #      Main loop of MPC                                 #
     # =======================================================
     def run(self) -> Datas:
-        while self.enable_run_EMS and self.t < 72:
+        while self.enable_run_EMS and self.t < 200:
 
             print(f"t = {self.t}, counter_mb: {self.counter_mb}") 
 
@@ -131,7 +135,7 @@ class EMS():
                 self.pv_forecasted_3th.iloc[1:]   = mmpw(self.p_pv_past_3th, self.Datas.NP_3TH)
                 self.load_forecasted_3th.iloc[1:] = mmpw(self.p_load_past_3th, self.Datas.NP_3TH)
                 
-                if self.enable_plot:
+                if self.enable_plot or self.enable_save_plot:
                     plt.figure(figsize=(10, 5))
                     time_steps = list(range(self.Datas.NP_3TH))
                     plt.plot(time_steps, self.pv_forecasted_3th['data'].values, label = 'pv_forecasted_3th')
@@ -139,6 +143,8 @@ class EMS():
                     plt.title("Forecast to 3th")
                     plt.legend()
                     plt.grid()
+                    if (self.enable_save_plot):
+                        plt.savefig(f"{self.path_to_plot}forecast_for_3th.png")
 
                 self.run_3th_optimization()
                 self.Datas.k_pv_sch     = self.results_3th.loc[0, 'k_pv_sch']
@@ -150,7 +156,7 @@ class EMS():
                     self.Datas.p_bat_dis_sch = 0
                     self.Datas.p_bat_ch_sch  = self.Datas.p_bat_sch
                 
-                if self.enable_plot:
+                if self.enable_plot or self.enable_save_plot:
                     # self.Datas.p_grid_sch = self.results_3th.loc[0, 'p_grid_sch'] # Not used
                     print(f"OF_3th: {self.OF_3th}")
                     plt.figure(figsize=(10, 5))
@@ -160,6 +166,8 @@ class EMS():
                     plt.title("Schedule")
                     plt.legend()
                     plt.grid()
+                    if (self.enable_save_plot):
+                        plt.savefig(f"{self.path_to_plot}schedule_from_3th.png")
                 
             # Run 2th optmization
             if (self.is_it_time_to_run_2th() and self.enable_run_2th):
@@ -168,16 +176,20 @@ class EMS():
                 self.run_2th_optimization()
                 self.send_control_signals()
                 
-                if self.enable_plot:
+                if self.enable_plot or self.enable_save_plot:
                     print(f"OF_2th: {self.OF_2th}")
                     plt.figure(figsize=(10, 5))
                     time_steps = list(range(self.Datas.NP_2TH))
                     plt.plot(time_steps, self.results_2th['p_bat_ref'].values, label = 'p_bat_ref')
                     plt.plot(time_steps, self.results_2th['k_pv_ref'].values, label = 'k_pv_ref')
                     plt.plot(time_steps, self.results_2th['p_sc_ref'].values, label = 'p_sc_ref')
+                    plt.plot(time_steps, self.pv_forecasted_2th['data'].values, label = 'pv_forecasted_2th')
+                    plt.plot(time_steps, self.load_forecasted_2th['data'].values, label = 'load_forecasted_2th')
                     plt.title("Reference")
                     plt.legend()
                     plt.grid()
+                    if (self.enable_save_plot):
+                        plt.savefig(f"{self.path_to_plot}results_2th_{self.t}.png")
                 
             # Check if plot
             if self.enable_plot:
@@ -189,7 +201,7 @@ class EMS():
             self.t = self.t + 1
             
         # self.plot_result() # Tem erro, analisar
-        return self.Datas
+        return self.Datas, self.t
 
 
 
@@ -252,15 +264,30 @@ class EMS():
                 self.results_3th, self.OF_3th = self.milp_optimization.isolated_optimization_3th(self.Datas, self.pv_forecasted_3th, self.load_forecasted_3th)
             else:
                 print("Don't have optimization method")
-                
         else:
             print("Don't have optimization method")
 
 
     def run_2th_optimization(self) -> None:
-        print("\n5) run_2th_optimization")
+
+        print("\n5) OTIMIZAZAO - ESTADO ATUAL")
         self.pv_forecasted_2th['data'] = self.Datas.p_pv
         self.load_forecasted_2th['data'] = self.Datas.p_load
+        # self.pv_forecasted_2th.loc[0, 'data'] = self.Datas.p_pv
+        # self.load_forecasted_2th.loc[0, 'data'] = self.Datas.p_load
+        # print(self.load_forecasted_2th)
+        
+        print(f'p_pv: {self.Datas.p_pv} '
+        f'p_load: {self.Datas.p_load} '
+        f'p_grid: {self.Datas.p_grid} '
+        f'p_bat: {self.Datas.p_bat} '
+        f'p_sc: {self.Datas.p_sc} '
+        f'soc_bat: {self.Datas.soc_bat} '
+        f'soc_sc: {self.Datas.soc_sc} '
+        f'p_bat_sch: {self.Datas.p_bat_sch} ')
+        
+        self.Datas.M.loc[self.t, 'power_balance'] = self.Datas.p_pv*self.Datas.k_pv + self.Datas.p_bat + self.Datas.p_sc - self.Datas.p_load
+        print(f"balanco: {self.Datas.M.loc[self.t, 'power_balance']}")
         
         # Call optimization
         time_before_optimizaion = time.time()
@@ -279,7 +306,7 @@ class EMS():
         print(f"Time to run run_2th_optimization: {optimizaion_time}")
     
     def get_measurements(self) -> None:
-        print("\n3) get_measurements")
+        print("3) MEDIDAS")
         wait_for_new_data = 1
         
         updated_data_switch = 1
@@ -306,6 +333,11 @@ class EMS():
                 # Datas from microgrid
                 # 0             1           2               3       4       5       6       7       8       9       10          11
                 # counter_mb	new_mb_data	operation_mode	p_pv	p_load	p_grid	p_bat	p_sc	soc_bat	soc_sc	p_bat_neg	p_sc_neg
+                
+                # if self.t > 0:
+                #     self.pv_forecasted_2th['data'] = self.Datas.p_pv
+                #     self.load_forecasted_2th['data'] = self.Datas.p_load
+                
                 self.Datas.p_pv      = registers[3]/self.Datas.MB_MULTIPLIER
                 self.Datas.p_load    = registers[4]/self.Datas.MB_MULTIPLIER
                 self.Datas.p_grid    = registers[5]/self.Datas.MB_MULTIPLIER
@@ -321,15 +353,15 @@ class EMS():
                 if self.Datas.p_sc_neg == 1:
                     self.Datas.p_sc = - self.Datas.p_sc
                 
-                # print(f'updated_data_switch: {updated_data_switch} '
-                # f'operation_mode: {self.Datas.operation_mode} '
-                # f'p_pv: {self.Datas.p_pv} '
-                # f'p_load: {self.Datas.p_load} '
-                # f'p_grid: {self.Datas.p_grid} '
-                # f'p_bat: {self.Datas.p_bat} '
-                # f'p_sc: {self.Datas.p_sc} '
-                # f'soc_bat: {self.Datas.soc_bat} '
-                # f'soc_sc: {self.Datas.soc_sc} \n')
+                print(f'updated_data_switch: {updated_data_switch} '
+                f'operation_mode: {self.Datas.operation_mode} ')
+                print(f'p_pv: {self.Datas.p_pv} '
+                f'p_load: {self.Datas.p_load} '
+                f'p_grid: {self.Datas.p_grid} '
+                f'p_bat: {self.Datas.p_bat} '
+                f'p_sc: {self.Datas.p_sc} '
+                f'soc_bat: {self.Datas.soc_bat} '
+                f'soc_sc: {self.Datas.soc_sc}')
                 
                 # Save data
                 index = self.t
@@ -337,10 +369,10 @@ class EMS():
                 self.Datas.M.loc[index, 'soc_sc'] = self.Datas.soc_sc
                 self.Datas.M.loc[index, 'p_bat'] = self.Datas.p_bat
                 self.Datas.M.loc[index, 'p_sc'] = self.Datas.p_sc
-                print(f"self.Datas.M.loc[{self.t}, 'soc_bat']: {self.Datas.M.loc[self.t, 'soc_bat']}")
-                print(f"self.Datas.M.loc[{self.t}, 'soc_sc']: {self.Datas.M.loc[self.t, 'soc_sc']}")
-                print(f"self.Datas.M.loc[{self.t}, 'p_bat']: {self.Datas.M.loc[self.t, 'p_bat']}")
-                print(f"self.Datas.M.loc[{self.t}, 'p_sc']: {self.Datas.M.loc[self.t, 'p_sc']}")
+                # print(f"self.Datas.M.loc[{self.t}, 'soc_bat']: {self.Datas.M.loc[self.t, 'soc_bat']}")
+                # print(f"self.Datas.M.loc[{self.t}, 'soc_sc']: {self.Datas.M.loc[self.t, 'soc_sc']}")
+                # print(f"self.Datas.M.loc[{self.t}, 'p_bat']: {self.Datas.M.loc[self.t, 'p_bat']}")
+                # print(f"self.Datas.M.loc[{self.t}, 'p_sc']: {self.Datas.M.loc[self.t, 'p_sc']}")
                 
             time.sleep(0.05)
             if (send_request_time - time.time() > 0.5):
@@ -349,7 +381,7 @@ class EMS():
 
 
     def send_control_signals(self) -> None:
-        print("\n6) Send control signals")
+        print("\n6) CONTROL SIGNAL TO SEND")
         is_signal_reference = 2
         existe_nan = self.results_2th.isna().any().any()
         if existe_nan:
@@ -363,13 +395,26 @@ class EMS():
         
         if p_bat_ref < 0:
             p_bat_ref_neg = 1
+            p_bat_ref = -p_bat_ref
         else:
             p_bat_ref_neg = 0
         
         if p_sc_ref < 0:
             p_sc_ref_neg = 1
+            p_sc_ref = - p_sc_ref
         else:
             p_sc_ref_neg = 0
+        # if p_grid_ref < 0: # TODO
+        
+        print(f"pv_forecasted_2th: {self.pv_forecasted_2th.loc[0,'data']}")
+        print(f"load_forecasted_2th: {self.load_forecasted_2th.loc[0,'data']}")
+        print(f'p_grid: {self.Datas.p_grid} '
+        f'p_bat_ref: {p_bat_ref} '
+        f'p_sc_ref: {p_sc_ref} '
+        f'p_grid_ref: {p_grid_ref} '
+        f'k_pv_ref: {k_pv_ref} '
+        f'p_bat_sch: {self.Datas.p_bat_sch} ')
+        
         control_signals = [p_bat_ref,
                            p_sc_ref,
                            p_grid_ref,
@@ -385,12 +430,37 @@ class EMS():
         self.Datas.M.loc[index, 'p_sc_ref'] = self.results_2th.loc[0, 'p_sc_ref']
         self.Datas.M.loc[index, 'p_grid_ref'] = self.results_2th.loc[0, 'p_grid_ref']
         self.Datas.M.loc[index, 'k_pv_ref'] = self.results_2th.loc[0, 'k_pv_ref']
+
+        print("p_bat_ref", end = ' ')
+        for k in range(self.Datas.NP_2TH):
+            print(self.results_2th.loc[k, 'p_bat_ref'], end = ' ')
+        print("")
+        print("p_sc_ref", end = ' ')
+        for k in range(self.Datas.NP_2TH):
+            print(self.results_2th.loc[k, 'p_sc_ref'], end = ' ')
+        print("")
+        print("p_grid_ref", end = ' ')
+        for k in range(self.Datas.NP_2TH):
+            print(self.results_2th.loc[k, 'p_grid_ref'], end = ' ')
+        print("")
+        print("pv_forecasted_2th", end = ' ')
+        for k in range(self.Datas.NP_2TH):
+            print(self.pv_forecasted_2th.loc[k,'data'], end = ' ')
+        print("")
+        print("load_forecasted_2th", end = ' ')
+        for k in range(self.Datas.NP_2TH):
+            print(self.load_forecasted_2th.loc[k,'data'], end = ' ')
+        print("")
         
-        print(f"p_bat_ref: {self.results_2th.loc[0, 'p_bat_ref']}")
         print(f"p_sc_ref: {self.results_2th.loc[0, 'p_sc_ref']}")
         print(f"p_grid_ref: {self.results_2th.loc[0, 'p_grid_ref']}")
         print(f"k_pv_ref: {self.results_2th.loc[0, 'k_pv_ref']}")
-        
+        print(f"p_pv_forecast: {self.pv_forecasted_2th.loc[0,'data']}")
+        print(f"load_pv_forecast: {self.load_forecasted_2th.loc[0,'data']}")
+        balance =   (self.results_2th.loc[0, 'p_bat_ref'] + self.results_2th.loc[0, 'p_sc_ref'] +
+                    self.results_2th.loc[0, 'p_grid_ref'] + self.results_2th.loc[0, 'k_pv_ref']*self.pv_forecasted_2th.loc[0,'data'] +
+                    - self.load_forecasted_2th.loc[0,'data'])
+        print(f"balance: {balance}")        
         
         time.sleep(0.05)
         wait_for_confirmation = 1
@@ -448,9 +518,10 @@ class EMS():
         
 if __name__ == "__main__":
 
+    tempo_inicio_total = time.time()
     EMS_instance = EMS()
     
-    datas = EMS_instance.run()
+    datas, t = EMS_instance.run()
     print(type(datas))
 
     print(f"datas.M.loc[{0}, 'soc_bat']: {datas.M.loc[0, 'soc_bat']}")
@@ -458,5 +529,18 @@ if __name__ == "__main__":
     print(f"datas.M.loc[{0}, 'p_bat']: {datas.M.loc[0, 'p_bat']}")
     print(f"datas.M.loc[{0}, 'p_sc']: {datas.M.loc[0, 'p_sc']}")
     
-    datas.M.to_csv("results.csv")
+    M = datas.M.head(t)
+    
+    try:
+        M.to_csv("results.csv")
+    except:
+        print("\n\n")
+        input_key = int(input("Fecha o CSV corno!"))
+        if input_key == 1:
+            M.to_csv("results.csv")
+        else:
+            pass
+        
+    tempo_total = time.time() - tempo_inicio_total
+    print(f"Tempo total: {tempo_total}")
     

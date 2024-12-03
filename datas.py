@@ -25,6 +25,7 @@ class Datas:
         self.M['p_sc_ref'] = self.M['p_sc_ref'].astype('float64')
         self.M['p_grid_ref'] = self.M['p_grid_ref'].astype('float64')
         self.M['k_pv_ref'] = self.M['k_pv_ref'].astype('float64')
+        self.M['power_balance'] = self.M['power_balance'].astype('float64')
 
         # Operation mode
         self.ISOLATED = 0
@@ -47,24 +48,24 @@ class Datas:
 
         # Technical specification constants
         # bat
-        self.Q_BAT         = int(120)
+        self.Q_BAT         = int(120) # kWh
         self.SOC_BAT_MIN   = float(0.2)
         self.SOC_BAT_MAX   = float(0.95)
-        self.P_BAT_MAX     = int(20)
-        self.P_BAT_MIN     = int(-20)
-        self.P_BAT_VAR_MAX = int(50)
-        self.P_BAT_VAR_MIN = int(50)
+        self.P_BAT_MAX     = int(20) # kW
+        self.P_BAT_MIN     = int(-20) # kW
+        self.P_BAT_VAR_MAX = int(50) # kW
+        self.P_BAT_VAR_MIN = int(50) # kW
         # sc
-        self.Q_SC         = float(0.289)
+        self.Q_SC         = float(0.289) # kWh
         self.SOC_SC_MIN = float(0.2)
         self.SOC_SC_MAX = float(0.95)
-        self.P_SC_MAX   = int(50)
-        self.P_SC_MIN   = int(-50)
-        self.P_SC_VAR_MAX = int(50)
-        self.P_SC_VAR_MIN = int(50)
+        self.P_SC_MAX   = int(50) # kW
+        self.P_SC_MIN   = int(-50) # kW
+        self.P_SC_VAR_MAX = int(50) # kW
+        self.P_SC_VAR_MIN = int(50) # kW
         # grid
-        self.P_GRID_MAX = int(150)
-        self.P_GRID_MIN = int(-150)
+        self.P_GRID_MAX = int(150) # kW
+        self.P_GRID_MIN = int(-150) # kW
 
         # Constansts references for optimization
         self.SOC_SC_REF  = 0.5
@@ -72,8 +73,8 @@ class Datas:
         self.K_PV_REF    = 1
            
         # Measurements (Init values)
-        self.soc_bat = 0.6
-        self.soc_sc  = 0.7
+        self.soc_bat = 0.8
+        self.soc_sc  = 0.5
         self.k_pv    = 1
         self.p_pv    = 0
         self.p_load  = 0
