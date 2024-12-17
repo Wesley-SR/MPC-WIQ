@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 class Datas:
     def __init__(self):
         
-        self.M = pd.read_csv("datas_1_s_completo_SNPTEE.csv")
+        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_1_dia.csv"
+        self.M = pd.read_csv(self.caminho_do_arquivo)
         print(f"colunas: {self.M.columns}")
 
         self.M['p_grid'] = self.M['p_grid'].astype('float64')

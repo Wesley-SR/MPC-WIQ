@@ -63,7 +63,7 @@ class OptimizationMILP():
 
 
         ''' ------------------------- FUNÇÃO OBJETIVO ------------------------------'''
-        J_pv_3th          = pl.lpSum([(abs_error_ref_k_pv_a[k] + abs_error_ref_k_pv_b[k]) for k in range(Datas.NP_3TH)])
+        J_pv_3th      = pl.lpSum([(abs_error_ref_k_pv_a[k] + abs_error_ref_k_pv_b[k]) for k in range(Datas.NP_3TH)])
         
         J_bat_var_ch  = pl.lpSum([(abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k])] for k in range(Datas.NP_3TH))
         
@@ -154,7 +154,7 @@ class OptimizationMILP():
         print("Valor da FO: {}".format(fo_value))
         
         if not pl.LpStatus[solution] == 'Optimal':
-            raise("Infactivel optimization problem")
+            raise("[isolated_optimization_3th] Infactivel optimization problem")
         
         
         
@@ -175,6 +175,8 @@ class OptimizationMILP():
                 results_3th.loc[k, 'k_pv_sch']    = k_pv[k].varValue
                 results_3th.loc[0, 'p_grid_sch']  = 0
                 results_3th.loc[k, 'soc_bat']    = soc_bat[k].varValue
+                results_3th.loc[k, 'pv_forecasted_3th'] = pv_forecasted.loc[k, 'data']
+                results_3th.loc[k, 'load_forecasted_3th'] = load_forecasted.loc[k, 'data']
         else:
             print("ENGASGOU")
 
@@ -186,13 +188,14 @@ class OptimizationMILP():
     --------------------------------------------------------------------------------'''
     @staticmethod
     def isolated_optimization_2th(Datas: Datas, pv_forecasted: pd.DataFrame, load_forecasted: pd.DataFrame) -> tuple:
-        print("isolated Optimization in 2th")
+        # print("isolated Optimization in 2th")
         
         WEIGHT_K_PV       = 1
-        WEIGHT_VAR_P_BAT  = 20
+        WEIGHT_VAR_P_BAT  = 15
         WEIGHT_REF_P_BAT  = 1
-        WEIGHT_REF_SOC_SC = 1
+        WEIGHT_REF_SOC_SC = 2
         WEIGHT_VAR_P_SC   = 0.0001
+        MULTIPLIER_J_VAR_BAT = 75
         
         ''' -------------------- Optimization Problem ---------------------------- '''
         prob = pl.LpProblem("OptimizationMILP", pl.LpMinimize) # LpMinimize e LpMaximize
@@ -274,15 +277,14 @@ class OptimizationMILP():
         U_k_bat = 1000
         Epsolon_bat = 0.0001
         max_var_bat_bigM = 0.25
-        multiplier = 100
 
         ''' ------------------------- FUNÇÃO OBJETIVO ------------------------------'''
         # We created each party of the OF separately. Then we put them all together.
         J_pv_3th      = pl.lpSum([(abs_error_ref_k_pv_a[k] + abs_error_ref_k_pv_b[k]) for k in range(Datas.NP_2TH)])
         
-        J_bat_var_ch  = pl.lpSum([(abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k] + flag_bigM_bat[k]*multiplier)] for k in range(Datas.NP_2TH))
+        J_bat_var_ch  = pl.lpSum([(abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k] + flag_bigM_bat[k]*MULTIPLIER_J_VAR_BAT)] for k in range(Datas.NP_2TH))
         
-        J_bat_var_dis = pl.lpSum([(abs_var_p_bat_dis_a[k] + abs_var_p_bat_dis_b[k] + flag_bigM_bat[k]*multiplier)] for k in range(Datas.NP_2TH))
+        J_bat_var_dis = pl.lpSum([(abs_var_p_bat_dis_a[k] + abs_var_p_bat_dis_b[k] + flag_bigM_bat[k]*MULTIPLIER_J_VAR_BAT)] for k in range(Datas.NP_2TH))
         
         J_bat_ref_p_bat_ch = pl.lpSum([(abs_error_ref_p_bat_ch_a[k] + abs_error_ref_p_bat_ch_b[k])] for k in range(Datas.NP_2TH))
         
@@ -416,8 +418,8 @@ class OptimizationMILP():
         solution  = prob.solve(solver)
         fo_status = pl.LpStatus[solution]
         fo_value = pl.value(prob.objective)
-        print("Status: {}".format(fo_status))
-        print("Valor da FO: {}".format(fo_value))
+        # print("Status: {}".format(fo_status))
+        # print("Valor da FO: {}".format(fo_value))
         
         if not pl.LpStatus[solution] == 'Optimal':
             raise("Infactivel optimization problem")
