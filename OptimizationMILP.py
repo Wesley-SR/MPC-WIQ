@@ -63,7 +63,7 @@ class OptimizationMILP():
 
 
         ''' ------------------------- FUNÇÃO OBJETIVO ------------------------------'''
-        J_pv_3th          = pl.lpSum([(abs_error_ref_k_pv_a[k] + abs_error_ref_k_pv_b[k]) for k in range(Datas.NP_3TH)])
+        J_pv_3th      = pl.lpSum([(abs_error_ref_k_pv_a[k] + abs_error_ref_k_pv_b[k]) for k in range(Datas.NP_3TH)])
         
         J_bat_var_ch  = pl.lpSum([(abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k])] for k in range(Datas.NP_3TH))
         
@@ -154,7 +154,7 @@ class OptimizationMILP():
         print("Valor da FO: {}".format(fo_value))
         
         if not pl.LpStatus[solution] == 'Optimal':
-            raise("Infactivel optimization problem")
+            raise("[isolated_optimization_3th] Infactivel optimization problem")
         
         
         
@@ -175,6 +175,8 @@ class OptimizationMILP():
                 results_3th.loc[k, 'k_pv_sch']    = k_pv[k].varValue
                 results_3th.loc[0, 'p_grid_sch']  = 0
                 results_3th.loc[k, 'soc_bat']    = soc_bat[k].varValue
+                results_3th.loc[k, 'pv_forecasted_3th'] = pv_forecasted.loc[k, 'data']
+                results_3th.loc[k, 'load_forecasted_3th'] = load_forecasted.loc[k, 'data']
         else:
             print("ENGASGOU")
 
@@ -186,13 +188,14 @@ class OptimizationMILP():
     --------------------------------------------------------------------------------'''
     @staticmethod
     def isolated_optimization_2th(Datas: Datas, pv_forecasted: pd.DataFrame, load_forecasted: pd.DataFrame) -> tuple:
-        print("isolated Optimization in 2th")
+        # print("isolated Optimization in 2th")
         
-        WEIGHT_K_PV = 1
-        WEIGHT_VAR_P_BAT = 5
-        WEIGHT_REF_P_BAT = 1
-        WEIGHT_REF_SOC_SC = 0.01
-        WEIGHT_VAR_P_SC = 0.00001
+        WEIGHT_K_PV       = 1
+        WEIGHT_VAR_P_BAT  = 15
+        WEIGHT_REF_P_BAT  = 1
+        WEIGHT_REF_SOC_SC = 2
+        WEIGHT_VAR_P_SC   = 0.0001
+        MULTIPLIER_J_VAR_BAT = 75
         
         ''' -------------------- Optimization Problem ---------------------------- '''
         prob = pl.LpProblem("OptimizationMILP", pl.LpMinimize) # LpMinimize e LpMaximize
@@ -202,11 +205,11 @@ class OptimizationMILP():
 
         ''' ------------------------- VARIÁVEIS DO PROBLEMA ----------------------- '''    
         # Battery power
-        p_bat_dis        = pl.LpVariable.dicts('p_bat_dis',         range(Datas.NP_2TH),lowBound=0, upBound=Datas.P_BAT_MAX,cat='Continuous')
-        p_bat_ch         = pl.LpVariable.dicts('p_bat_ch',          range(Datas.NP_2TH),lowBound=0, upBound=Datas.P_BAT_MAX,cat='Continuous')
-        flag_ch_bat  = pl.LpVariable.dicts('flag_ch_bat',   range(Datas.NP_2TH),cat='Binary')
-        flag_dis_bat = pl.LpVariable.dicts('flag_dis_bat',  range(Datas.NP_2TH),cat='Binary')
-        soc_bat          = pl.LpVariable.dicts('soc_bat',           range(Datas.NP_2TH),lowBound=Datas.SOC_BAT_MIN, upBound=Datas.SOC_BAT_MAX,cat='Continuous')
+        p_bat_dis    = pl.LpVariable.dicts('p_bat_dis', range(Datas.NP_2TH),lowBound=0, upBound=Datas.P_BAT_MAX,cat='Continuous')
+        p_bat_ch     = pl.LpVariable.dicts('p_bat_ch', range(Datas.NP_2TH),lowBound=0, upBound=Datas.P_BAT_MAX,cat='Continuous')
+        flag_ch_bat  = pl.LpVariable.dicts('flag_ch_bat', range(Datas.NP_2TH),cat='Binary')
+        flag_dis_bat = pl.LpVariable.dicts('flag_dis_bat', range(Datas.NP_2TH),cat='Binary')
+        soc_bat      = pl.LpVariable.dicts('soc_bat', range(Datas.NP_2TH),lowBound=Datas.SOC_BAT_MIN, upBound=Datas.SOC_BAT_MAX,cat='Continuous')
         
         # Absolute valute for battery power variation module
         # Charge
@@ -259,19 +262,29 @@ class OptimizationMILP():
         flag_abs_error_ref_soc_sc_b = pl.LpVariable.dicts('flag_abs_error_ref_soc_sc_b', range(Datas.NP_2TH), cat='Binary')
                
         # Photovoltaic Panel
-        k_pv                    = pl.LpVariable.dicts('k_pv',          range(Datas.NP_2TH), lowBound=0, upBound=1, cat='Continuous')
+        k_pv                      = pl.LpVariable.dicts('k_pv',          range(Datas.NP_2TH), lowBound=0, upBound=1, cat='Continuous')
         abs_error_ref_k_pv_a      = pl.LpVariable.dicts('abs_error_ref_k_pv_a',      range(Datas.NP_2TH), lowBound=0, upBound=1, cat='Continuous')
         abs_error_ref_k_pv_b      = pl.LpVariable.dicts('abs_error_ref_k_pv_b',      range(Datas.NP_2TH), lowBound=0, upBound=1, cat='Continuous')
         flag_abs_error_ref_k_pv_a = pl.LpVariable.dicts('flag_abs_error_ref_k_pv_a', range(Datas.NP_2TH), cat='Binary')
         flag_abs_error_ref_k_pv_b = pl.LpVariable.dicts('flag_abs_error_ref_k_pv_b', range(Datas.NP_2TH), cat='Binary')
+        
+        # Power Balance pl.LpVariable.dicts('abs_var_p_bat_ch_a',     
+        power_balance = pl.LpVariable.dicts('power_balance', range(Datas.NP_2TH),lowBound=0, upBound=1,cat='Continuous')
+        
+        # Penalidade variacao bateria
+        flag_bigM_bat = pl.LpVariable.dicts('flag_d_bat', range(Datas.NP_2TH), cat='Binary')
+        L_k_bat = -1000
+        U_k_bat = 1000
+        Epsolon_bat = 0.0001
+        max_var_bat_bigM = 0.25
 
         ''' ------------------------- FUNÇÃO OBJETIVO ------------------------------'''
         # We created each party of the OF separately. Then we put them all together.
         J_pv_3th      = pl.lpSum([(abs_error_ref_k_pv_a[k] + abs_error_ref_k_pv_b[k]) for k in range(Datas.NP_2TH)])
         
-        J_bat_var_ch  = pl.lpSum([(abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k])] for k in range(Datas.NP_2TH))
+        J_bat_var_ch  = pl.lpSum([(abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k] + flag_bigM_bat[k]*MULTIPLIER_J_VAR_BAT)] for k in range(Datas.NP_2TH))
         
-        J_bat_var_dis = pl.lpSum([(abs_var_p_bat_dis_a[k] + abs_var_p_bat_dis_b[k])] for k in range(Datas.NP_2TH))
+        J_bat_var_dis = pl.lpSum([(abs_var_p_bat_dis_a[k] + abs_var_p_bat_dis_b[k] + flag_bigM_bat[k]*MULTIPLIER_J_VAR_BAT)] for k in range(Datas.NP_2TH))
         
         J_bat_ref_p_bat_ch = pl.lpSum([(abs_error_ref_p_bat_ch_a[k] + abs_error_ref_p_bat_ch_b[k])] for k in range(Datas.NP_2TH))
         
@@ -333,16 +346,16 @@ class OptimizationMILP():
                     prob += abs_var_p_sc_dis_a[k] - abs_var_p_sc_dis_b == p_sc_dis[k] - 0
             else:
                 # SOC bat
-                prob += soc_bat[k] == soc_bat[k-1] - (p_bat_dis[k-1] - p_bat_ch[k-1])*Datas.TS_2TH/Datas.Q_BAT
+                prob += soc_bat[k] == soc_bat[k-1] - (p_bat_dis[k-1] - p_bat_ch[k-1])*(Datas.TS_2TH/60/60)/Datas.Q_BAT
                 # var p_bat
                 prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == p_bat_ch[k] - p_bat_ch[k-1] # + (abs_var_p_bat_ch_a[k-1] - abs_var_p_bat_ch_b[k-1]) # Como penalizar a variacao
                 prob += abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k] == p_bat_dis[k] - p_bat_dis[k-1] # + (abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k])
                 # SOC sc
-                prob += soc_sc[k] == soc_sc[k-1] - (p_sc_dis[k-1] - p_sc_ch[k-1])*Datas.TS_2TH/Datas.Q_SC
+                prob += soc_sc[k] == soc_sc[k-1] - (p_sc_dis[k-1] - p_sc_ch[k-1])*(Datas.TS_2TH/60/60)/Datas.Q_SC
                 # vat p_sc
                 prob += abs_var_p_sc_ch_a[k] - abs_var_p_sc_ch_b[k] == p_sc_ch[k] - p_bat_ch[k-1]
                 prob += abs_var_p_sc_dis_a[k] - abs_var_p_sc_dis_b[k] == p_sc_dis[k] - p_bat_dis[k-1]
-                
+            
             # Absolute value for p_bat
             prob += abs_var_p_bat_ch_a[k] <= flag_abs_var_p_bat_ch_a[k] * Datas.P_BAT_VAR_MAX
             prob += abs_var_p_bat_ch_b[k] <= flag_abs_var_p_bat_ch_b[k] * Datas.P_BAT_VAR_MAX
@@ -351,6 +364,10 @@ class OptimizationMILP():
             prob += abs_var_p_bat_dis_b[k] <= flag_abs_var_p_bat_dis_b[k] * Datas.P_BAT_VAR_MAX
             prob += flag_abs_var_p_bat_dis_a[k] + flag_abs_var_p_bat_dis_b[k] <= 1 # simultaneity
 
+            # flag_bigM_bat   L_k_bat     U_k_bat    Epsolon_bat    max_var_bat_bigM
+            prob += (abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k] + abs_var_p_bat_dis_a[k] + abs_var_p_bat_dis_b[k]) - max_var_bat_bigM >= L_k_bat * (1 - flag_bigM_bat[k])
+            prob += (abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k] + abs_var_p_bat_dis_a[k] + abs_var_p_bat_dis_b[k]) - max_var_bat_bigM <= (U_k_bat + Epsolon_bat)*flag_bigM_bat[k] - Epsolon_bat
+            
             # Absolute value between p_bat and p_bat_sch
             # Charge
             prob += abs_error_ref_p_bat_ch_a[k] - abs_error_ref_p_bat_ch_b[k] == p_bat_ch[k] - Datas.p_bat_ch_sch
@@ -384,25 +401,25 @@ class OptimizationMILP():
             prob += flag_abs_error_ref_soc_sc_a[k] + flag_abs_error_ref_soc_sc_b[k] <= 1 # simultaneity
             
             # BALANÇO DE POTÊNCIA NO BARRAMENTO DC
-            prob += (
+            prob += power_balance[k] == (
                     k_pv[k]*pv_forecasted.loc[k, 'data'] + 
                     p_bat_dis[k] +
-                    p_sc_dis[k]
-                    ==
-                    load_forecasted.loc[k, 'data'] + 
-                    p_bat_ch[k] +
-                    p_bat_ch[k]
+                    p_sc_dis[k] +
+                    - load_forecasted.loc[k, 'data'] + 
+                    - p_bat_ch[k] +
+                    - p_sc_ch[k]
                     )
+            prob += power_balance[k] == 0
         
         ''' ------------------------------------------------------------------------------- 
         EXECUTA O ALGORITMO DE OTIMIZAÇÃO
         --------------------------------------------------------------------------------'''
-        print("EXECUTAR SOLVER 2th")
+        # print("EXECUTAR SOLVER 2th")
         solution  = prob.solve(solver)
         fo_status = pl.LpStatus[solution]
         fo_value = pl.value(prob.objective)
-        print("Status: {}".format(fo_status))
-        print("Valor da FO: {}".format(fo_value))
+        # print("Status: {}".format(fo_status))
+        # print("Valor da FO: {}".format(fo_value))
         
         if not pl.LpStatus[solution] == 'Optimal':
             raise("Infactivel optimization problem")
@@ -418,7 +435,7 @@ class OptimizationMILP():
         #     Datas.R_2th.loc[k , 'k_pv_ref']   = k_pv[k].varvalue
         results_2th = None
         if pl.LpStatus[solution] == 'Optimal':
-            print("OTIMO")
+            # print("OTIMO")
             # Results
             results_2th = pd.DataFrame(index=range(Datas.NP_2TH), columns=['p_bat_ref', 'k_pv_ref', 'p_grid_ref', 'p_sc_ref', 'soc_bat', 'soc_sc'])
             for k in range(0, Datas.NP_2TH):
@@ -431,6 +448,10 @@ class OptimizationMILP():
                 # These values are for analysis only
                 results_2th.loc[k, 'soc_bat'] = soc_bat[k].varValue
                 results_2th.loc[k, 'soc_sc'] = soc_sc[k].varValue
+                
+                if power_balance[k].varValue >= 0.001:
+                    print("Ta dando merda")
+                # print(f"flagbigM: {flag_bigM_bat[k].varValue}, ABSvar: {(abs_var_p_bat_ch_a[k].varValue + abs_var_p_bat_ch_b[k].varValue + abs_var_p_bat_dis_a[k].varValue + abs_var_p_bat_dis_b[k].varValue)}")
                 # Verifica se existe algum NaN
             existe_nan = results_2th.isna().any().any()
             if existe_nan:
