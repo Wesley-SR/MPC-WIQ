@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from pyModbusTCP.client import ModbusClient
+import traceback
 
 # My libs
 from OptimizationMIQP import OptimizationMIQP
@@ -36,7 +37,7 @@ class EMS():
         # Create a object of datas
         self.Datas = Datas()
         
-        # Execution variables
+        # Execution variables 
         self.enable_run_EMS = True
         self.enable_run_3th = True
         self.enable_run_2th = True
@@ -45,12 +46,12 @@ class EMS():
         self.path_to_plot = "C:\\Users\\wesle\\Desktop\\Plots\\"
         
         # Timers
-        self.t = 0 # Time that start in matrix M (in simulation)
-        self.t_final = 1
+        self.t = 25670 # Time that start in matrix M (in simulation)
+        self.t_final = 40000 # Second to finish
         # Last Timers
         self.last_time_measurement = -1
         self.last_time_2th = -1
-        self.last_time_3th = -900
+        self.last_time_3th = -900 # 900 porque é como se tivesse passado o tempo para rodar o 3th
 
         # Create optimization object
         if self.Datas.optimization_method == "QP":
@@ -67,8 +68,9 @@ class EMS():
             self.modbus_client = ModbusClient(host = self.host, port = self.port, unit_id = self.client_ID, auto_open=True)
         except Exception as e:
             print("[EMS Init] Error connecting Modbus Client: {}".format(e))
+            traceback.print_exc()
             self.modbus_client.close()
-        self.counter_mb = 0
+        self.counter_mb = self.t
         self.modbus_client.write_single_register(100, 1)
         reset = 1
         while reset == 1:
@@ -207,6 +209,7 @@ class EMS():
         
         except Exception as e:
             print(f"[EMS][RUN] Error: {e}")
+            traceback.print_exc()
         
         return self.Datas, self.t
 
@@ -258,17 +261,19 @@ class EMS():
         print("4) run_3th_optimization")
         # Call optimization
         if (self.Datas.operation_mode == self.Datas.CONNECTED):
-            if (self.Datas.optimization_method == "QP"):
-                self.results_3th, self.OF_3th = self.qp_optimization.connected_optimization_3th(self.Datas, self.pv_forecasted_3th, self.load_forecasted_3th)
-            elif(self.Datas.optimization_method == "MILP"):
-                # self.milp_optimization.connected_optimization_3th()
-                print("Dont have connected MILP")
+            # if (self.Datas.optimization_method == "QP"):
+            #     self.results_3th, self.OF_3th = self.qp_optimization.connected_optimization_3th(self.Datas, self.pv_forecasted_3th, self.load_forecasted_3th)
+            # elif(self.Datas.optimization_method == "MILP"):
+            #     # self.milp_optimization.connected_optimization_3th()
+            #     print("Dont have connected MILP")
+            print("AINDA NÃO IMPLEMENTADO")
 
         elif (self.Datas.operation_mode == self.Datas.ISOLATED):
             if (self.Datas.optimization_method == "QP"):
-                self.results_3th, self.OF_3th = self.qp_optimization.isolated_optimization_3th(self.Datas, self.pv_forecasted_3th, self.load_forecasted_3th)
+                # self.results_3th, self.OF_3th = self.qp_optimization.isolated_optimization_3th(self.Datas, self.pv_forecasted_3th, self.load_forecasted_3th)
+                print("AINDA NÃO IMPLEMENTADO")
             elif (self.Datas.optimization_method == "MILP"):
-                self.results_3th, self.OF_3th = self.milp_optimization.isolated_optimization_3th(self.Datas, self.pv_forecasted_3th, self.load_forecasted_3th)
+                self.results_3th, self.OF_3th = self.milp_optimization.optimization_3th(self.Datas, self.pv_forecasted_3th, self.load_forecasted_3th, CONNECTED_MODE = False)
             else:
                 print("Don't have optimization method")
         else:
@@ -296,22 +301,23 @@ class EMS():
         f'soc_sc: {self.Datas.soc_sc} '
         f'p_bat_sch: {self.Datas.p_bat_sch} ')
         
-        self.Datas.M.loc[self.t, 'power_balance'] = self.Datas.p_pv*self.Datas.k_pv + self.Datas.p_bat + self.Datas.p_sc - self.Datas.p_load
-        print(f"balanco: {self.Datas.M.loc[self.t, 'power_balance']}")
+        self.Datas.M.loc[self.t, 'power_balance'] = self.Datas.k_pv*self.Datas.p_pv + self.Datas.p_bat + self.Datas.p_sc - self.Datas.p_load
+        print(f"Balanco before 2th: {self.Datas.M.loc[self.t, 'power_balance']}")
         
         # Call optimization
         time_before_optimizaion = time.time()
         if (self.Datas.operation_mode == self.Datas.CONNECTED):
             if (self.Datas.optimization_method == "QP"):
-                self.results_2th, self.OF_2th = self.qp_optimization.connected_optimization_2th(self.Datas, self.pv_forecasted_2th, self.load_forecasted_2th)
+                # self.results_2th, self.OF_2th = self.qp_optimization.connected_optimization_2th(self.Datas, self.pv_forecasted_2th, self.load_forecasted_2th)
+                print("AINDA NÃO IMPLEMENTADO")
             elif (self.Datas.optimization_method == "MILP"):
-                print("TODO: MILP Optimization")
-                pass
+                print("AINDA NÃO IMPLEMENTADO")
         elif (self.Datas.operation_mode == self.Datas.ISOLATED):
             if (self.Datas.optimization_method == "QP"):
-                self.results_2th, self.OF_2th = self.qp_optimization.isolated_optimization_2th(self.Datas, self.pv_forecasted_2th, self.load_forecasted_2th)
+                # self.results_2th, self.OF_2th = self.qp_optimization.isolated_optimization_2th(self.Datas, self.pv_forecasted_2th, self.load_forecasted_2th)
+                print("AINDA NÃO IMPLEMENTADO")
             elif (self.Datas.optimization_method == "MILP"):
-                self.results_2th, self.OF_2th = self.milp_optimization.isolated_optimization_2th(self.Datas, self.pv_forecasted_2th, self.load_forecasted_2th)
+                self.results_2th, self.OF_2th = self.milp_optimization.optimization_2th(self.Datas, self.pv_forecasted_2th, self.load_forecasted_2th, CONNECTED_MODE = False)
         optimizaion_time = time.time() - time_before_optimizaion
         # print(f"Time to run run_2th_optimization: {optimizaion_time}")
     
@@ -322,7 +328,7 @@ class EMS():
         updated_data_switch = 1
         self.modbus_client.write_multiple_registers(0, [self.counter_mb, updated_data_switch])
         send_request_time = time.time()
-        time.sleep(0.05)
+        time.sleep(0.03)
         
         while wait_for_new_data == 1:
             # print("Waiting for datas")
@@ -337,6 +343,7 @@ class EMS():
                 # Operation mode
                 if (registers[2] == 1):
                     self.Datas.operation_mode = self.Datas.CONNECTED
+                    print("Ainda não implementado")
                 else:
                     self.Datas.operation_mode = self.Datas.ISOLATED
                 
@@ -379,6 +386,10 @@ class EMS():
                 self.Datas.M.loc[index, 'soc_sc'] = self.Datas.soc_sc
                 self.Datas.M.loc[index, 'p_bat'] = self.Datas.p_bat
                 self.Datas.M.loc[index, 'p_sc'] = self.Datas.p_sc
+                
+                self.Datas.M.loc[self.t, 'power_balance'] = self.Datas.k_pv*self.Datas.p_pv + self.Datas.p_bat + self.Datas.p_sc - self.Datas.p_load
+                print(f"Balanco after mensure: {self.Datas.M.loc[self.t, 'power_balance']}")
+                
                 # print(f"self.Datas.M.loc[{self.t}, 'soc_bat']: {self.Datas.M.loc[self.t, 'soc_bat']}")
                 # print(f"self.Datas.M.loc[{self.t}, 'soc_sc']: {self.Datas.M.loc[self.t, 'soc_sc']}")
                 # print(f"self.Datas.M.loc[{self.t}, 'p_bat']: {self.Datas.M.loc[self.t, 'p_bat']}")
@@ -549,7 +560,8 @@ if __name__ == "__main__":
         M.to_csv("results.csv")
     except:
         print("\n\n")
-        input_key = int(input("Fecha o CSV corno!"))
+        traceback.print_exc()
+        input_key = int(input("Fechar o CSV! Pressione 1 para continuar."))
         if input_key == 1:
             M.to_csv("results.csv")
         else:
