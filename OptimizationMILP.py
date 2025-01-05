@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''============================================================================
-                               PROJETO V2G
+                   EMS - CONTROLE TERCIÁRIO E SECUNDÁRIO
 #==========================================================================='''
 
 import pulp as pl
@@ -14,13 +14,22 @@ class OptimizationMILP():
     isolated Optimization 3th
     --------------------------------------------------------------------------------'''
     @staticmethod
-    def isolated_optimization_3th(Datas: Datas, pv_forecasted: pd.DataFrame, load_forecasted: pd.DataFrame) -> tuple:
+    def optimization_3th(Datas: Datas, pv_forecasted: pd.DataFrame, load_forecasted: pd.DataFrame, CONNECTED_MODE: bool) -> tuple:
         print("isolated Optimization in 3th")
         
-        WEIGHT_K_PV      = 1
-        WEIGHT_VAR_P_BAT = 1
-        WEIGHT_VAR_P_BAT = 1
-        WEIGHT_SOC_BAT   = 5
+        if CONNECTED_MODE:
+            WEIGHT_K_PV      = 1
+            WEIGHT_VAR_P_BAT = 1
+            WEIGHT_VAR_P_BAT = 1
+            WEIGHT_SOC_BAT   = 5
+        else:
+            WEIGHT_K_PV       = 1
+            WEIGHT_VAR_P_BAT  = 1
+            WEIGHT_VAR_P_BAT  = 1
+            WEIGHT_SOC_BAT    = 5
+            WEIGHT_VAR_P_GRID = 5
+            WEIGHT_REF_P_GRID = 5
+            
         
         ''' -------------------- Optimization Problem ---------------------------- '''
         prob = pl.LpProblem("OptimizationMILP", pl.LpMinimize) # LpMinimize e LpMaximize
@@ -61,6 +70,19 @@ class OptimizationMILP():
         flag_abs_error_ref_k_pv_a = pl.LpVariable.dicts('flag_abs_error_ref_k_pv_a', range(Datas.NP_3TH), cat='Binary')
         flag_abs_error_ref_k_pv_b = pl.LpVariable.dicts('flag_abs_error_ref_k_pv_b', range(Datas.NP_3TH), cat='Binary')
 
+        if (CONNECTED_MODE):
+            # Import
+            abs_var_p_grid_imp_a      = pl.LpVariable.dicts('abs_var_p_grid_imp_a',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+            abs_var_p_grid_imp_b      = pl.LpVariable.dicts('abs_var_p_grid_imp_b',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+            flag_abs_var_p_grid_imp_a = pl.LpVariable.dicts('flag_abs_var_p_grid_imp_a', range(Datas.NP_3TH), cat='Binary')
+            flag_abs_var_p_grid_imp_b = pl.LpVariable.dicts('flag_abs_var_p_grid_imp_b', range(Datas.NP_3TH), cat='Binary')
+            # Export
+            abs_var_p_grid_exp_a      = pl.LpVariable.dicts('abs_var_p_grid_exp_a',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+            abs_var_p_grid_exp_b      = pl.LpVariable.dicts('abs_var_p_grid_exp_b',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+            flag_abs_var_p_grid_exp_a = pl.LpVariable.dicts('flag_abs_var_p_grid_exp_a', range(Datas.NP_3TH), cat='Binary')
+            flag_abs_var_p_grid_exp_b = pl.LpVariable.dicts('flag_abs_var_p_grid_exp_b', range(Datas.NP_3TH), cat='Binary')
+            
+
 
         ''' ------------------------- FUNÇÃO OBJETIVO ------------------------------'''
         J_pv_3th      = pl.lpSum([(abs_error_ref_k_pv_a[k] + abs_error_ref_k_pv_b[k]) for k in range(Datas.NP_3TH)])
@@ -71,12 +93,24 @@ class OptimizationMILP():
         
         J_bat_var_soc = pl.lpSum([(abs_error_ref_soc_bat_a[k] + abs_error_ref_soc_bat_b[k])] for k in range(Datas.NP_3TH))
         
-        # TODO: Dividir pelo máximo da parcela (Deve passar por normalização)
-        objective_function = ( (WEIGHT_K_PV      * J_pv_3th      / 1)
-                             + (WEIGHT_VAR_P_BAT * J_bat_var_ch  / 2)
-                             + (WEIGHT_VAR_P_BAT * J_bat_var_dis / 2)
-                             + (WEIGHT_SOC_BAT   * J_bat_var_soc / 1)
-                             )
+        if CONNECTED_MODE:
+            J_grid_var_imp  = pl.lpSum([(abs_var_p_grid_imp_a[k] + abs_var_p_grid_imp_b[k])] for k in range(Datas.NP_3TH))
+            J_grid_var_exp = pl.lpSum([(abs_var_p_grid_exp_a[k] + abs_var_p_grid_exp_b[k])] for k in range(Datas.NP_3TH))
+            objective_function = ( (WEIGHT_K_PV      * J_pv_3th      / 1)
+                                + (WEIGHT_VAR_P_BAT  * J_bat_var_ch  / 2)
+                                + (WEIGHT_VAR_P_BAT  * J_bat_var_dis / 2)
+                                + (WEIGHT_SOC_BAT    * J_bat_var_soc / 1)
+                                + (WEIGHT_VAR_P_GRID * J_grid_var_imp / 2)
+                                + (WEIGHT_VAR_P_GRID * J_grid_var_exp / 2)
+                                )
+        else:
+            # TODO: Dividir pelo máximo da parcela (Deve passar por normalização)
+            objective_function = ( (WEIGHT_K_PV      * J_pv_3th      / 1)
+                                + (WEIGHT_VAR_P_BAT * J_bat_var_ch  / 2)
+                                + (WEIGHT_VAR_P_BAT * J_bat_var_dis / 2)
+                                + (WEIGHT_SOC_BAT   * J_bat_var_soc / 1)
+                                )
+            
         prob.setObjective(objective_function)
         
         
@@ -112,6 +146,15 @@ class OptimizationMILP():
             prob += abs_var_p_bat_dis_a[k] <= flag_abs_var_p_bat_dis_a[k] * Datas.P_BAT_VAR_MAX
             prob += abs_var_p_bat_dis_b[k] <= flag_abs_var_p_bat_dis_b[k] * Datas.P_BAT_VAR_MAX
             prob += flag_abs_var_p_bat_dis_a[k] + flag_abs_var_p_bat_dis_b[k] <= 1 # simultaneity
+
+            # Grid
+            if CONNECTED_MODE:
+                prob += abs_var_p_grid_imp_a[k] <= flag_abs_var_p_grid_imp_a[k] * Datas.P_GRID_MAX
+                prob += abs_var_p_grid_imp_b[k] <= flag_abs_var_p_grid_imp_b[k] * Datas.P_GRID_MAX
+                prob += flag_abs_var_p_grid_imp_a[k] + flag_abs_var_p_grid_imp_b[k] <= 1 # simultaneity
+                prob += abs_var_p_grid_exp_a[k] <= flag_abs_var_p_grid_exp_a[k] * Datas.P_GRID_MAX
+                prob += abs_var_p_grid_exp_b[k] <= flag_abs_var_p_grid_exp_b[k] * Datas.P_GRID_MAX
+                prob += flag_abs_var_p_grid_exp_a[k] + flag_abs_var_p_grid_exp_b[k] <= 1 # simultaneity
 
             # Battery SOC
             if k > 0:
@@ -183,11 +226,14 @@ class OptimizationMILP():
         return results_3th, fo_value
 
 
+
+
+
     ''' ------------------------------------------------------------------------------- 
     isolated Optimization 2th
     --------------------------------------------------------------------------------'''
     @staticmethod
-    def isolated_optimization_2th(Datas: Datas, pv_forecasted: pd.DataFrame, load_forecasted: pd.DataFrame) -> tuple:
+    def optimization_2th(Datas: Datas, pv_forecasted: pd.DataFrame, load_forecasted: pd.DataFrame, CONNECTED_MODE: bool) -> tuple:
         # print("isolated Optimization in 2th")
         
         WEIGHT_K_PV       = 1
@@ -308,11 +354,6 @@ class OptimizationMILP():
         
         
         ''' --------------------------- RESTRIÇÕES -------------------------------- '''
-        '''
-            No código, k = 0, é o mesmo que X(t+k|t) para k = 1, do texto.
-            
-            k=0 é o atual
-        '''  
         for k in range(0, Datas.NP_2TH):
             
             # P_bat
