@@ -87,7 +87,7 @@ if __name__ == '__main__':
         # -------------------- MEDIDAS --------------------
         if (counter_mb != last_counter_mb) and (updated_data_switch == 1):
             print(f"\ncounter_mb: {counter_mb}")
-            print("MEDIDAS")
+            print("MEDIDAS do CSV")
             last_counter_mb = counter_mb
             updated_data_switch = 0
             
@@ -115,12 +115,12 @@ if __name__ == '__main__':
                         soc_bat = soc_bat - p_bat*(data_base.TS_2TH/60/60)/data_base.Q_BAT
                         soc_sc = soc_sc - p_sc*(data_base.TS_2TH/60/60)/data_base.Q_SC
                         
-                        power_balance = p_bat + k_pv*p_pv + p_sc - p_load
-                        if power_balance >= -0.0001 and power_balance <= 0.0001:
+                        power_balance = p_bat + k_pv_ref*p_pv + p_sc - p_load
+                        if power_balance >= -0.001 and power_balance <= 0.001:
                             pass
                         else:
                             print("DEU CHABU!!!!!!!!!!!!!!!!!!!!!")
-                            print(f"power_balance: {power_balance} = {p_bat} + {k_pv*p_pv} + {p_sc} - {p_load}")
+                            print(f"power_balance: {power_balance} = {p_bat} + {k_pv_ref*p_pv} + {p_sc} - {p_load}")
                             break
                     else: # (data_base.operation_mode == data_base.CONNECTED):
                         pass
