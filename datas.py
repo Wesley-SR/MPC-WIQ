@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 class Datas:
     def __init__(self):
         
-        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_1_dia.csv"
+        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias.csv"
         self.M = pd.read_csv(self.caminho_do_arquivo)
         print(f"colunas: {self.M.columns}")
 
