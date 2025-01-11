@@ -46,8 +46,9 @@ class EMS():
         self.path_to_plot = "C:\\Users\\wesle\\Desktop\\Plots\\"
         
         # Timers
-        self.t = 25670 # Time that start in matrix M (in simulation)
-        self.t_final = 40000 # Second to finish
+        self.t = self.Datas.t
+        self.t_final = self.Datas.t_final
+        
         # Last Timers
         self.last_time_measurement = -1
         self.last_time_2th = -1
@@ -81,8 +82,8 @@ class EMS():
         self.pv_forecasted_3th = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['data'])
         self.load_forecasted_3th = pd.DataFrame(index=range(self.Datas.NP_3TH), columns=['data'])
         # Create DataFrame for past datas
-        self.p_pv_past_3th = pd.read_csv("data_pv_15_min_past.csv", index_col='time')
-        self.p_load_past_3th = pd.read_csv("data_load_15_min_past.csv", index_col='time')
+        self.p_pv_past_3th = pd.read_csv(self.Datas.path_past_pv, index_col='time')
+        self.p_load_past_3th = pd.read_csv(self.Datas.path_past_load, index_col='time')
         if self.enable_plot or self.enable_save_plot:
             plt.figure(figsize=(10, 5))
             time_steps = list(range(self.Datas.NP_3TH))
@@ -103,6 +104,7 @@ class EMS():
         self.OF_3th = 0
         self.OF_2th = 0
 
+        self.sum_optimizaion_time = 0
 
 
 
@@ -154,17 +156,26 @@ class EMS():
                     self.run_3th_optimization()
                     self.Datas.k_pv_sch     = self.results_3th.loc[0, 'k_pv_sch']
                     self.Datas.p_bat_sch    = self.results_3th.loc[0, 'p_bat_sch']
-                    self.Datas.p_grid_sch    = self.results_3th.loc[0, 'p_grid_sch']
+                    self.Datas.p_grid_sch   = self.results_3th.loc[0, 'p_grid_sch']
 
+                    # Power from bat to MG
                     if self.Datas.p_bat_sch >= 0:
                         self.Datas.p_bat_dis_sch = self.Datas.p_bat_sch
                         self.Datas.p_bat_ch_sch  = 0
+                    # Power from MG to battery
                     else:
                         self.Datas.p_bat_dis_sch = 0
                         self.Datas.p_bat_ch_sch  = self.Datas.p_bat_sch
+                    # Power from grid to MG
+                    if self.Datas.p_grid_sch >= 0:
+                        self.Datas.p_grid_imp_sch = self.Datas.p_grid_sch
+                        self.Datas.p_grid_exp_sch = 0
+                    # Power from MG to grid
+                    else:
+                        self.Datas.p_grid_imp_sch = 0
+                        self.Datas.p_grid_exp_sch = self.Datas.p_grid_sch
                     
                     if self.enable_plot or self.enable_save_plot:
-                        # self.Datas.p_grid_sch = self.results_3th.loc[0, 'p_grid_sch'] # Not used
                         print(f"OF_3th: {self.OF_3th}")
                         plt.figure(figsize=(10, 5))
                         time_steps = list(range(self.Datas.NP_3TH))
@@ -211,7 +222,9 @@ class EMS():
             print(f"[EMS][RUN] Error: {e}")
             traceback.print_exc()
         
-        return self.Datas, self.t
+        medium_time_2th_optimization = self.sum_optimizaion_time / (self.t - self.Datas.t)
+        
+        return self.Datas, self.t, medium_time_2th_optimization
 
 
 
@@ -259,28 +272,13 @@ class EMS():
 
     def run_3th_optimization(self) -> None:
         print("4) run_3th_optimization")
-        # Call optimization
-        if (self.Datas.operation_mode == self.Datas.CONNECTED):
-            # if (self.Datas.optimization_method == "QP"):
-            #     self.results_3th, self.OF_3th = self.qp_optimization.connected_optimization_3th(self.Datas, self.pv_forecasted_3th, self.load_forecasted_3th)
-            # elif(self.Datas.optimization_method == "MILP"):
-            #     # self.milp_optimization.connected_optimization_3th()
-            #     print("Dont have connected MILP")
-            print("AINDA NÃO IMPLEMENTADO")
+        self.results_3th, self.OF_3th = self.milp_optimization.optimization_3th(self.Datas,
+                                                                                self.pv_forecasted_3th,
+                                                                                self.load_forecasted_3th,
+                                                                                self.Datas.connected_mode)
 
-        elif (self.Datas.operation_mode == self.Datas.ISOLATED):
-            if (self.Datas.optimization_method == "QP"):
-                # self.results_3th, self.OF_3th = self.qp_optimization.isolated_optimization_3th(self.Datas, self.pv_forecasted_3th, self.load_forecasted_3th)
-                print("AINDA NÃO IMPLEMENTADO")
-            elif (self.Datas.optimization_method == "MILP"):
-                self.results_3th, self.OF_3th = self.milp_optimization.optimization_3th(self.Datas, self.pv_forecasted_3th, self.load_forecasted_3th, CONNECTED_MODE = False)
-            else:
-                print("Don't have optimization method")
-        else:
-            print("Don't have optimization method")
-        
         # Save 3th results
-        self.results_3th.to_csv(f"results_3th_{self.t}.csv")
+        self.results_3th.to_csv(f"Results_compilation/results_3th_{self.t}.csv")
 
 
     def run_2th_optimization(self) -> None:
@@ -292,34 +290,31 @@ class EMS():
         # self.load_forecasted_2th.loc[0, 'data'] = self.Datas.p_load
         # print(self.load_forecasted_2th)
         
-        print(f'p_pv: {self.Datas.p_pv} '
-        f'p_load: {self.Datas.p_load} '
-        f'p_grid: {self.Datas.p_grid} '
-        f'p_bat: {self.Datas.p_bat} '
-        f'p_sc: {self.Datas.p_sc} '
-        f'soc_bat: {self.Datas.soc_bat} '
-        f'soc_sc: {self.Datas.soc_sc} '
-        f'p_bat_sch: {self.Datas.p_bat_sch} ')
+        print(f'k_pv: {self.Datas.k_pv}'
+              f'p_pv: {self.Datas.p_pv} '
+              f'p_load: {self.Datas.p_load} '
+              f'p_grid: {self.Datas.p_grid} '
+              f'p_bat: {self.Datas.p_bat} '
+              f'p_sc: {self.Datas.p_sc} '
+              f'soc_bat: {self.Datas.soc_bat} '
+              f'soc_sc: {self.Datas.soc_sc} '
+              f'p_bat_sch: {self.Datas.p_bat_sch} ')
         
-        self.Datas.M.loc[self.t, 'power_balance'] = self.Datas.k_pv*self.Datas.p_pv + self.Datas.p_bat + self.Datas.p_sc - self.Datas.p_load
+        if self.Datas.connected_mode:
+            self.Datas.M.loc[self.t, 'power_balance'] = self.Datas.k_pv*self.Datas.p_pv + self.Datas.p_bat + self.Datas.p_sc - self.Datas.p_load + self.Datas.p_grid
+        else:
+            self.Datas.M.loc[self.t, 'power_balance'] = self.Datas.k_pv*self.Datas.p_pv + self.Datas.p_bat + self.Datas.p_sc - self.Datas.p_load
+    
         print(f"Balanco before 2th: {self.Datas.M.loc[self.t, 'power_balance']}")
         
         # Call optimization
         time_before_optimizaion = time.time()
-        if (self.Datas.operation_mode == self.Datas.CONNECTED):
-            if (self.Datas.optimization_method == "QP"):
-                # self.results_2th, self.OF_2th = self.qp_optimization.connected_optimization_2th(self.Datas, self.pv_forecasted_2th, self.load_forecasted_2th)
-                print("AINDA NÃO IMPLEMENTADO")
-            elif (self.Datas.optimization_method == "MILP"):
-                print("AINDA NÃO IMPLEMENTADO")
-        elif (self.Datas.operation_mode == self.Datas.ISOLATED):
-            if (self.Datas.optimization_method == "QP"):
-                # self.results_2th, self.OF_2th = self.qp_optimization.isolated_optimization_2th(self.Datas, self.pv_forecasted_2th, self.load_forecasted_2th)
-                print("AINDA NÃO IMPLEMENTADO")
-            elif (self.Datas.optimization_method == "MILP"):
-                self.results_2th, self.OF_2th = self.milp_optimization.optimization_2th(self.Datas, self.pv_forecasted_2th, self.load_forecasted_2th, CONNECTED_MODE = False)
+        self.results_2th, self.OF_2th = self.milp_optimization.optimization_2th(self.Datas,
+                                                                                self.pv_forecasted_2th,
+                                                                                self.load_forecasted_2th,
+                                                                                self.Datas.connected_mode)
         optimizaion_time = time.time() - time_before_optimizaion
-        # print(f"Time to run run_2th_optimization: {optimizaion_time}")
+        self.sum_optimizaion_time = self.sum_optimizaion_time + optimizaion_time
     
     def get_measurements(self) -> None:
         print("3) MEDIDAS")
@@ -332,7 +327,22 @@ class EMS():
         
         while wait_for_new_data == 1:
             # print("Waiting for datas")
-            registers = self.modbus_client.read_holding_registers(0, 15)
+            """ Sequência dos sinais de status da MG
+                0 counter_mb - Quem controla esse contador é o próprio EMS
+                1 updated_data_switch
+                2 connected_mode
+                3 p_pv
+                4 p_load
+                5 p_grid
+                6 p_bat
+                7 p_sc
+                8 soc_bat
+                9 soc_sc
+                10 p_bat_neg
+                11 p_sc_neg
+                12 p_grid_neg
+            """
+            registers = self.modbus_client.read_holding_registers(0, 14)
             # Check if we have new data
             updated_data_switch = int(registers[1])
             if updated_data_switch == 0:
@@ -342,36 +352,30 @@ class EMS():
                 
                 # Operation mode
                 if (registers[2] == 1):
-                    self.Datas.operation_mode = self.Datas.CONNECTED
-                    print("Ainda não implementado")
+                    self.Datas.connected_mode = True
                 else:
-                    self.Datas.operation_mode = self.Datas.ISOLATED
-                
-                # Datas from microgrid
-                # 0             1           2               3       4       5       6       7       8       9       10          11
-                # counter_mb	new_mb_data	operation_mode	p_pv	p_load	p_grid	p_bat	p_sc	soc_bat	soc_sc	p_bat_neg	p_sc_neg
-                
-                # if self.t > 0:
-                #     self.pv_forecasted_2th['data'] = self.Datas.p_pv
-                #     self.load_forecasted_2th['data'] = self.Datas.p_load
-                
-                self.Datas.p_pv      = registers[3]/self.Datas.MB_MULTIPLIER
-                self.Datas.p_load    = registers[4]/self.Datas.MB_MULTIPLIER
-                self.Datas.p_grid    = registers[5]/self.Datas.MB_MULTIPLIER
-                self.Datas.p_bat     = registers[6]/self.Datas.MB_MULTIPLIER
-                self.Datas.p_sc      = registers[7]/self.Datas.MB_MULTIPLIER
-                self.Datas.soc_bat   = registers[8]/self.Datas.MB_MULTIPLIER
-                self.Datas.soc_sc    = registers[9]/self.Datas.MB_MULTIPLIER
-                self.Datas.p_bat_neg = registers[10]
-                self.Datas.p_sc_neg  = registers[11]
+                    self.Datas.connected_mode = False
+
+                self.Datas.p_pv       = registers[3]/self.Datas.MB_MULTIPLIER
+                self.Datas.p_load     = registers[4]/self.Datas.MB_MULTIPLIER
+                self.Datas.p_grid     = registers[5]/self.Datas.MB_MULTIPLIER
+                self.Datas.p_bat      = registers[6]/self.Datas.MB_MULTIPLIER
+                self.Datas.p_sc       = registers[7]/self.Datas.MB_MULTIPLIER
+                self.Datas.soc_bat    = registers[8]/self.Datas.MB_MULTIPLIER
+                self.Datas.soc_sc     = registers[9]/self.Datas.MB_MULTIPLIER
+                self.Datas.p_bat_neg  = registers[10]
+                self.Datas.p_sc_neg   = registers[11]
+                self.Datas.p_grid_neg = registers[12]
                 
                 if self.Datas.p_bat_neg == 1:
                     self.Datas.p_bat = - self.Datas.p_bat
                 if self.Datas.p_sc_neg == 1:
                     self.Datas.p_sc = - self.Datas.p_sc
+                if self.Datas.p_grid_neg == 1:
+                    self.Datas.p_grid = - self.Datas.p_grid
                 
                 print(f'updated_data_switch: {updated_data_switch} '
-                f'operation_mode: {self.Datas.operation_mode} ')
+                f'connected_mode: {self.Datas.connected_mode} ')
                 print(f'p_pv: {self.Datas.p_pv} '
                 f'p_load: {self.Datas.p_load} '
                 f'p_grid: {self.Datas.p_grid} '
@@ -386,8 +390,9 @@ class EMS():
                 self.Datas.M.loc[index, 'soc_sc'] = self.Datas.soc_sc
                 self.Datas.M.loc[index, 'p_bat'] = self.Datas.p_bat
                 self.Datas.M.loc[index, 'p_sc'] = self.Datas.p_sc
+                self.Datas.M.loc[index, 'p_grid'] = self.Datas.p_grid
                 
-                self.Datas.M.loc[self.t, 'power_balance'] = self.Datas.k_pv*self.Datas.p_pv + self.Datas.p_bat + self.Datas.p_sc - self.Datas.p_load
+                self.Datas.M.loc[self.t, 'power_balance'] = self.Datas.k_pv*self.Datas.p_pv + self.Datas.p_bat + self.Datas.p_sc - self.Datas.p_load + self.Datas.p_grid
                 print(f"Balanco after mensure: {self.Datas.M.loc[self.t, 'power_balance']}")
                 
                 # print(f"self.Datas.M.loc[{self.t}, 'soc_bat']: {self.Datas.M.loc[self.t, 'soc_bat']}")
@@ -413,6 +418,7 @@ class EMS():
         p_sc_ref   = int((self.results_2th.loc[0, 'p_sc_ref']) * self.Datas.MB_MULTIPLIER)
         p_grid_ref = int((self.results_2th.loc[0, 'p_grid_ref']) * self.Datas.MB_MULTIPLIER)
         k_pv_ref   = int((self.results_2th.loc[0, 'k_pv_ref']) * self.Datas.MB_MULTIPLIER)
+        self.Datas.k_pv = k_pv_ref/self.Datas.MB_MULTIPLIER
         
         if p_bat_ref < 0:
             p_bat_ref_neg = 1
@@ -425,7 +431,12 @@ class EMS():
             p_sc_ref = - p_sc_ref
         else:
             p_sc_ref_neg = 0
-        # if p_grid_ref < 0: # TODO
+            
+        if p_grid_ref < 0:
+            p_grid_ref_neg = 1
+            p_grid_ref = - p_grid_ref
+        else:
+            p_grid_ref_neg = 0
         
         print(f"pv_forecasted_2th: {self.pv_forecasted_2th.loc[0,'data']} "
         f"load_forecasted_2th: {self.load_forecasted_2th.loc[0,'data']} "
@@ -434,16 +445,27 @@ class EMS():
         f"p_sc_ref: {p_sc_ref} "
         f"p_grid_ref: {p_grid_ref} "
         f"k_pv_ref: {k_pv_ref} "
-        f"p_bat_sch: {self.Datas.p_bat_sch} ")
+        f"p_bat_sch: {self.Datas.p_bat_sch}") # p_bat_sch ta aqui para comparar com p_bat_ref
+        
+        """ Sequência dos sinais de controle
+            15 p_bat_ref
+            16 p_sc_ref
+            17 p_grid_ref
+            18 k_pv_ref
+            19 p_bat_ref_neg
+            20 p_sc_ref_neg
+            21 p_grid_ref_neg
+        """
         
         control_signals = [p_bat_ref,
                            p_sc_ref,
                            p_grid_ref,
                            k_pv_ref,
                            p_bat_ref_neg,
-                           p_sc_ref_neg]
+                           p_sc_ref_neg,
+                           p_grid_ref_neg]
         
-        self.modbus_client.write_multiple_registers(12, control_signals)
+        self.modbus_client.write_multiple_registers(15, control_signals) # 15 deve estar alinhado com o cliente Modbus
         
         # Save data
         index = self.t
@@ -508,7 +530,7 @@ class EMS():
         
         plt.figure(figsize=(10, 5))
         
-        if (self.Datas.operation_mode == "CONNECTED"):
+        if (self.Datas.connected_mode):
             print("Plot p_grid")
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_grid_3th'], marker='o', linestyle='-', color='r', label='Grid')
         
@@ -523,7 +545,7 @@ class EMS():
         plt.grid()
 
         plt.figure(figsize=(10, 5))
-        if (self.Datas.operation_mode == "CONNECTED"):
+        if (self.Datas.connected_mode):
             plt.plot(time_steps, self.Datas.R_3th.loc[:, 'k_pv_3th'], marker='o', linestyle='-', color='r', label='k_pv_3th')
         
         plt.plot(time_steps, self.Datas.R_3th.loc[:, 'soc_bat_3th'], marker='o', linestyle='-', color='b', label='soc_bat')
@@ -543,13 +565,16 @@ if __name__ == "__main__":
     tempo_inicio_total = time.time()
     EMS_instance = EMS()
     
-    datas, t = EMS_instance.run()
+    datas, t, medium_time_2th_optimization = EMS_instance.run()
     print(type(datas))
 
     print(f"datas.M.loc[{0}, 'soc_bat']: {datas.M.loc[0, 'soc_bat']}")
     print(f"datas.M.loc[{0}, 'soc_sc']: {datas.M.loc[0, 'soc_sc']}")
     print(f"datas.M.loc[{0}, 'p_bat']: {datas.M.loc[0, 'p_bat']}")
     print(f"datas.M.loc[{0}, 'p_sc']: {datas.M.loc[0, 'p_sc']}")
+    print(f"datas.M.loc[{0}, 'p_grid']: {datas.M.loc[0, 'p_grid']}")
+    
+    print(f"medium_time_2th_optimization: {medium_time_2th_optimization}")
     
     M = datas.M.head(t)
     
@@ -557,13 +582,13 @@ if __name__ == "__main__":
         M.loc[k, "p_load"] = - M.loc[k, "p_load"]
     
     try:
-        M.to_csv("results.csv")
+        M.to_csv("Results_compilation/results.csv")
     except:
         print("\n\n")
         traceback.print_exc()
         input_key = int(input("Fechar o CSV! Pressione 1 para continuar."))
         if input_key == 1:
-            M.to_csv("results.csv")
+            M.to_csv("Results_compilation/results.csv")
         else:
             pass
         

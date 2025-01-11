@@ -13,7 +13,40 @@ import matplotlib.pyplot as plt
 class Datas:
     def __init__(self):
         
+        """
+        Teste 1 - Primerio, que testei para o ilhado
+            self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias.csv"
+            self.path_past_pv = "data_pv_15_min_past.csv"
+            self.path_past_load = "data_load_15_min_past.csv"
+            
+        Teste 2 - Sem carga para ver exportação para a grid
+            self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias_sem_carga.csv"
+            self.path_past_pv = "data_pv_15_min_past.csv"
+            self.path_past_load = "data_load_15_min_past_sem_carga.csv"
+        """
         self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias.csv"
+        self.path_past_pv = "data_pv_15_min_past.csv"
+        self.path_past_load = "data_load_15_min_past.csv"
+        
+        
+        """ TIMERS DE INICIO E FIM
+            self.t       -> Time that start in matrix M
+            self.t_final -> Second to finish
+            
+            Teste pegando inicio do PV:
+            self.t = 25670
+            self.t_final = 40000
+            
+            Teste para variação da carga (conferir)
+            self.t = 0
+            self.t_final = 3000
+        """
+        # Timers
+        self.t = 25670
+        self.t_final = 40000
+        
+        
+        
         self.M = pd.read_csv(self.caminho_do_arquivo)
         print(f"colunas: {self.M.columns}")
 
@@ -29,10 +62,7 @@ class Datas:
         self.M['power_balance'] = self.M['power_balance'].astype('float64')
 
         # Operation mode
-        self.ISOLATED = 0
-        self.CONNECTED = 1
-        # self.operation_mode = CONNECTED
-        self.operation_mode = self.ISOLATED
+        self.connected_mode = True # user need choose this
         
         # Optmization method
         # self.optimization_method = "QP"
@@ -51,22 +81,24 @@ class Datas:
         # bat
         self.Q_BAT         = int(120) # kWh
         self.SOC_BAT_MIN   = float(0.2)
-        self.SOC_BAT_MAX   = float(0.95)
+        self.SOC_BAT_MAX   = float(0.85)
         self.P_BAT_MAX     = int(20) # kW
-        self.P_BAT_MIN     = int(-20) # kW
         self.P_BAT_VAR_MAX = int(50) # kW
-        self.P_BAT_VAR_MIN = int(50) # kW
         # sc
         self.Q_SC         = float(0.289) # kWh
-        self.SOC_SC_MIN = float(0.2)
+        self.SOC_SC_MIN = float(0.15)
         self.SOC_SC_MAX = float(0.95)
         self.P_SC_MAX   = int(50) # kW
-        self.P_SC_MIN   = int(-50) # kW
         self.P_SC_VAR_MAX = int(50) # kW
-        self.P_SC_VAR_MIN = int(50) # kW
+        self.SOC_SC_MIN_RECOMMENDED = float(0.2)
+        self.SOC_SC_MAX_RECOMMENDED = float(0.9)
+        
         # grid
         self.P_GRID_MAX = int(150) # kW
-        self.P_GRID_MIN = int(-150) # kW
+        self.P_GRID_VAR_MAX = int(150) # kW
+        self.P_GRID_EXP_DESIRED = self.P_GRID_MAX
+        self.P_GRID_IMP_DESIRED = 0
+        
 
         # Constansts references for optimization
         self.SOC_SC_REF  = 0.5
@@ -84,15 +116,18 @@ class Datas:
         self.p_sc    = 0
         
         # Tell us if is negative value
-        self.p_bat_neg = 0
-        self.p_sc_neg = 0
+        self.p_bat_neg  = 0
+        self.p_sc_neg   = 0
+        self.p_grid_neg = 0
         
         # Scheduled (Calculated by 3th)
-        self.p_bat_sch     = 0
-        self.p_bat_ch_sch  = 0
-        self.p_bat_dis_sch = 0
-        self.p_grid_sch    = 0
-        self.k_pv_sch      = 0
+        self.p_bat_sch      = 0
+        self.p_bat_ch_sch   = 0
+        self.p_bat_dis_sch  = 0
+        self.p_grid_sch     = 0
+        self.p_grid_exp_sch = 0
+        self.p_grid_imp_sch = 0
+        self.k_pv_sch       = 0
         
         # References (Calculated by 2th)
         self.p_bat_ref  = 0
