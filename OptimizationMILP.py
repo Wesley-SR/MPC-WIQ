@@ -21,7 +21,6 @@ class OptimizationMILP():
         if connected_mode is True:
             WEIGHT_REF_K_PV  = 1
             WEIGHT_VAR_P_BAT = 1
-            WEIGHT_VAR_P_BAT = 2
             MULTIPLIER_J_VAR_BAT = 75
             WEIGHT_REF_SOC_BAT   = 1
             WEIGHT_VAR_P_GRID = 0.01
@@ -29,7 +28,7 @@ class OptimizationMILP():
         else: 
             WEIGHT_REF_K_PV   = 1
             WEIGHT_VAR_P_BAT  = 1
-            WEIGHT_VAR_P_BAT  = 1
+            MULTIPLIER_J_VAR_BAT = 75
             WEIGHT_REF_SOC_BAT    = 5
             
         
@@ -304,11 +303,11 @@ class OptimizationMILP():
             WEIGHT_REF_K_PV   = 1
             WEIGHT_VAR_K_PV   = 1
             WEIGHT_VAR_P_BAT  = 1
-            WEIGHT_REF_P_BAT  = 1
+            WEIGHT_REF_P_BAT  = 0.5
             WEIGHT_REF_SOC_SC = 2
             WEIGHT_VAR_P_SC   = 0.001
             MULTIPLIER_J_VAR_BAT = 1
-            WEIGHT_REF_P_GRID = 0.5
+            WEIGHT_REF_P_GRID = 0.1
             WEIGHT_VAR_P_GRID = 0.001
             WEIGHT_J_SOC_SC_REC = 1000
         else:
@@ -691,7 +690,10 @@ class OptimizationMILP():
                 # This values are for inverters reference
                 results_2th.loc[k, 'p_bat_ref'] = p_bat_dis[k].varValue - p_bat_ch[k].varValue
                 results_2th.loc[k, 'k_pv_ref'] = k_pv[k].varValue
-                results_2th.loc[k, 'p_grid_ref']  = 0
+                if connected_mode is True:
+                    results_2th.loc[k, 'p_grid_ref'] = p_grid_imp[k].varValue - p_grid_exp[k].varValue
+                else:
+                    results_2th.loc[k, 'p_grid_ref'] = 0
                 results_2th.loc[k, 'p_sc_ref'] = p_sc_dis[k].varValue - p_sc_ch[k].varValue
                 
                 # These values are for analysis only

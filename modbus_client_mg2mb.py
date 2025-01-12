@@ -133,7 +133,7 @@ if __name__ == '__main__':
                         soc_sc = soc_sc - p_sc*(datas.TS_2TH/60/60)/datas.Q_SC
                         power_balance = p_bat + k_pv_ref*p_pv + p_sc - p_load
                         
-                    if not (power_balance >= -0.001 and power_balance <= 0.001):
+                    if not ((power_balance >= -0.001) and (power_balance <= 0.001)):
                         print(f"power_balance: {power_balance} = {p_bat} + {k_pv_ref*p_pv} + {p_sc} - {p_load} + {p_grid}")
                         raise("Error in power balance.")
                         
@@ -143,9 +143,9 @@ if __name__ == '__main__':
 
                     if (soc_sc >= datas.SOC_SC_MAX) or (soc_sc <= datas.SOC_SC_MIN):
                         print(f"soc_sc: {soc_sc}")
-                        raise("Error in power SOC sc")
-                    if (soc_sc >= datas.SOC_SC_MAX_RECOMMENDED) or (soc_sc <= datas.SOC_SC_MIN_RECOMMENDED):
-                        print(f"************ SOC: {soc_sc}!!")
+                        raise("Error in power soc_sc")
+                    if (soc_sc > datas.SOC_SC_MAX_RECOMMENDED) or (soc_sc < datas.SOC_SC_MIN_RECOMMENDED):
+                        print(f"************ soc_sc: {soc_sc}!!")
                         
                     got_reference_signals = False
             

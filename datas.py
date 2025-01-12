@@ -15,18 +15,23 @@ class Datas:
         
         """
         Teste 1 - Primerio, que testei para o ilhado
-            self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias.csv"
-            self.path_past_pv = "data_pv_15_min_past.csv"
-            self.path_past_load = "data_load_15_min_past.csv"
-            
-        Teste 2 - Sem carga para ver exportação para a grid
-            self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias_sem_carga.csv"
-            self.path_past_pv = "data_pv_15_min_past.csv"
-            self.path_past_load = "data_load_15_min_past_sem_carga.csv"
-        """
         self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias.csv"
         self.path_past_pv = "data_pv_15_min_past.csv"
         self.path_past_load = "data_load_15_min_past.csv"
+            
+        Teste 2 - Sem carga para ver exportação para a grid
+        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias_sem_carga.csv"
+        self.path_past_pv = "data_pv_15_min_past.csv"
+        self.path_past_load = "data_load_15_min_past_sem_carga.csv"
+            
+        Teste 3 - Iniciando com PV
+        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias.csv"
+        self.path_past_pv = "data_pv_15_min_past_t_init_25200.csv"
+        self.path_past_load = "data_load_15_min_past_t_init_25200.csv"
+        """
+        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias.csv"
+        self.path_past_pv = "data_pv_15_min_past_t_init_25200.csv"
+        self.path_past_load = "data_load_15_min_past_t_init_25200.csv"
         
         
         """ TIMERS DE INICIO E FIM
@@ -34,7 +39,7 @@ class Datas:
             self.t_final -> Second to finish
             
             Teste pegando inicio do PV:
-            self.t = 25670
+            self.t = 25200
             self.t_final = 40000
             
             Teste para variação da carga (conferir)
@@ -42,8 +47,8 @@ class Datas:
             self.t_final = 3000
         """
         # Timers
-        self.t = 25670
-        self.t_final = 40000
+        self.t = 25200
+        self.t_final = 30000
         
         
         
@@ -74,28 +79,26 @@ class Datas:
         self.TS_2TH         = 1 # seconds
         self.TS_3TH         = 900 # seconds, 900 s = 15 m
         self.TS_MEASUREMENT = 1 # seconds
-        self.TS_FORECAST    = 1 # minutes
-        self.TIME_SLEEP     = 0.3 # seconds
 
         # Technical specification constants
         # bat
         self.Q_BAT         = int(120) # kWh
         self.SOC_BAT_MIN   = float(0.2)
         self.SOC_BAT_MAX   = float(0.85)
-        self.P_BAT_MAX     = int(20) # kW
-        self.P_BAT_VAR_MAX = int(50) # kW
+        self.P_BAT_MAX     = int(10) # kW
+        self.P_BAT_VAR_MAX = int(10) # kW
         # sc
         self.Q_SC         = float(0.289) # kWh
         self.SOC_SC_MIN = float(0.15)
         self.SOC_SC_MAX = float(0.95)
-        self.P_SC_MAX   = int(50) # kW
-        self.P_SC_VAR_MAX = int(50) # kW
-        self.SOC_SC_MIN_RECOMMENDED = float(0.2)
-        self.SOC_SC_MAX_RECOMMENDED = float(0.9)
+        self.P_SC_MAX   = int(10) # kW
+        self.P_SC_VAR_MAX = int(10) # kW
+        self.SOC_SC_MIN_RECOMMENDED = float(0.25)
+        self.SOC_SC_MAX_RECOMMENDED = float(0.85)
         
         # grid
-        self.P_GRID_MAX = int(150) # kW
-        self.P_GRID_VAR_MAX = int(150) # kW
+        self.P_GRID_MAX = int(50) # kW
+        self.P_GRID_VAR_MAX = int(50) # kW
         self.P_GRID_EXP_DESIRED = self.P_GRID_MAX
         self.P_GRID_IMP_DESIRED = 0
         

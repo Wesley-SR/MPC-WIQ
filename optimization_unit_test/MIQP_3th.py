@@ -26,7 +26,6 @@ class Datas:
         self.TS_3TH         = 1 # seconds
         self.TS_MEASUREMENT = 1 # seconds
         self.TS_FORECAST    = 1 # minutes
-        self.TIME_SLEEP     = 0.3 # seconds
 
         # Technical specification constants
         # bat
