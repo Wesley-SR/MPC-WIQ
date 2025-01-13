@@ -15,7 +15,7 @@ class OptimizationMILP():
     --------------------------------------------------------------------------------'''
     @staticmethod
     def optimization_3th_market(Datas: Datas, pv_forecasted: pd.DataFrame, load_forecasted: pd.DataFrame, p_grid_cost: pd.DataFrame, connected_mode: bool) -> tuple:
-        
+         
         # print(f"pv_forecasted len: {len(pv_forecasted)}, load_forecasted len: {len(load_forecasted)}, p_grid_costlen: {len(p_grid_cost)} ")
         # 3TH - 3TH - 3TH - 3TH - 3TH - 3TH - 3TH - 3TH - 3TH - 3TH
         if connected_mode is True:
