@@ -41,7 +41,7 @@ class EMS():
         self.enable_run_EMS = True
         self.enable_run_3th = True
         self.enable_run_2th = True
-        self.enable_plot = False
+        self.enable_plot = True
         self.enable_save_plot = False
         self.path_to_plot = "C:\\Users\\wesle\\Desktop\\Plots\\"
         
@@ -84,16 +84,17 @@ class EMS():
         # Create DataFrame for past datas
         self.p_pv_past_3th = pd.read_csv(self.Datas.path_past_pv, index_col='time')
         self.p_load_past_3th = pd.read_csv(self.Datas.path_past_load, index_col='time')
-        if self.enable_plot or self.enable_save_plot:
-            plt.figure(figsize=(10, 5))
-            time_steps = list(range(self.Datas.NP_3TH))
-            plt.plot(time_steps, self.p_pv_past_3th['data'].values, label = 'p_pv_past_3th')
-            plt.plot(time_steps, self.p_load_past_3th['data'].values, label = 'p_load_past_3th')
-            plt.title('Passado')
-            plt.legend()
-            plt.grid()
-            if (self.enable_save_plot):
-                plt.savefig(f'{self.path_to_plot}Passado.png')
+        self.p_grid_cost = pd.read_csv(self.Datas.path_grid_cost)
+        # if self.enable_plot or self.enable_save_plot:
+        #     plt.figure(figsize=(10, 5))
+        #     time_steps = list(range(self.Datas.NP_3TH))
+        #     plt.plot(time_steps, self.p_pv_past_3th['data'].values, label = 'p_pv_past_3th')
+        #     plt.plot(time_steps, self.p_load_past_3th['data'].values, label = 'p_load_past_3th')
+        #     plt.title('Passado')
+        #     plt.legend()
+        #     plt.grid()
+        #     if (self.enable_save_plot):
+        #         plt.savefig(f'{self.path_to_plot}Passado.png')
         
         # Create DataFrame for forecast
         self.pv_forecasted_2th = pd.DataFrame(index=range(self.Datas.NP_2TH), columns=['data'])
@@ -142,16 +143,16 @@ class EMS():
                     self.pv_forecasted_3th.iloc[1:]   = mmpw(self.p_pv_past_3th, self.Datas.NP_3TH)
                     self.load_forecasted_3th.iloc[1:] = mmpw(self.p_load_past_3th, self.Datas.NP_3TH)
                     
-                    if self.enable_plot or self.enable_save_plot:
-                        plt.figure(figsize=(10, 5))
-                        time_steps = list(range(self.Datas.NP_3TH))
-                        plt.plot(time_steps, self.pv_forecasted_3th['data'].values, label = 'pv_forecasted_3th')
-                        plt.plot(time_steps, self.load_forecasted_3th['data'].values, label = 'load_forecasted_3th')
-                        plt.title("Forecast to 3th")
-                        plt.legend()
-                        plt.grid()
-                        if (self.enable_save_plot):
-                            plt.savefig(f"{self.path_to_plot}forecast_for_3th.png")
+                    # if self.enable_plot or self.enable_save_plot:
+                    #     plt.figure(figsize=(10, 5))
+                    #     time_steps = list(range(self.Datas.NP_3TH))
+                    #     plt.plot(time_steps, self.pv_forecasted_3th['data'].values, label = 'pv_forecasted_3th')
+                    #     plt.plot(time_steps, self.load_forecasted_3th['data'].values, label = 'load_forecasted_3th')
+                    #     plt.title("Forecast to 3th")
+                    #     plt.legend()
+                    #     plt.grid()
+                    #     if (self.enable_save_plot):
+                    #         plt.savefig(f"{self.path_to_plot}forecast_for_3th.png")
 
                     self.run_3th_optimization()
                     self.Datas.k_pv_sch     = self.results_3th.loc[0, 'k_pv_sch']
@@ -175,17 +176,23 @@ class EMS():
                         self.Datas.p_grid_imp_sch = 0
                         self.Datas.p_grid_exp_sch = self.Datas.p_grid_sch
                     
-                    if self.enable_plot or self.enable_save_plot:
-                        print(f"OF_3th: {self.OF_3th}")
-                        plt.figure(figsize=(10, 5))
-                        time_steps = list(range(self.Datas.NP_3TH))
-                        plt.plot(time_steps, self.results_3th['p_bat_sch'].values, label = 'p_bat_sch')
-                        plt.plot(time_steps, self.results_3th['k_pv_sch'].values, label = 'k_pv_sch')
-                        plt.title("Schedule")
-                        plt.legend()
-                        plt.grid()
-                        if (self.enable_save_plot):
-                            plt.savefig(f"{self.path_to_plot}schedule_from_3th.png")
+                    # if self.enable_plot or self.enable_save_plot:
+                    #     print(f"OF_3th: {self.OF_3th}")
+                    #     plt.figure(figsize=(10, 5))
+                    #     time_steps = list(range(self.Datas.NP_3TH))
+                    #     plt.plot(time_steps, self.results_3th['p_bat_sch'].values, label = 'p_bat_sch')
+                    #     # plt.plot(time_steps, self.results_3th['k_pv_sch'].values, label = 'k_pv_sch')
+                    #     plt.plot(time_steps, self.results_3th['p_grid_sch'].values, label = 'p_grid_sch')
+                    #     plt.plot(time_steps, self.pv_forecasted_3th['data'].values, label = 'pv_forecasted_3th')
+                    #     plt.plot(time_steps, self.load_forecasted_3th['data'].values, label = 'load_forecasted_3th')
+                    #     plt.title("Schedule")
+                    #     plt.legend()
+                    #     plt.grid()
+                    #     if (self.enable_save_plot):
+                    #         plt.savefig(f"{self.path_to_plot}schedule_from_3th.png")
+                        
+                    #     plt.figure(figsize=(10, 5))
+                    #     plt.plot(time_steps, self.results_3th['soc_bat_sch'].values, label = 'p_bat_sch')
                     
                 # Run 2th optmization
                 if (self.is_it_time_to_run_2th() and self.enable_run_2th):
@@ -194,20 +201,20 @@ class EMS():
                     self.run_2th_optimization()
                     self.send_control_signals()
                     
-                    if self.enable_plot or self.enable_save_plot:
-                        print(f"OF_2th: {self.OF_2th}")
-                        plt.figure(figsize=(10, 5))
-                        time_steps = list(range(self.Datas.NP_2TH))
-                        plt.plot(time_steps, self.results_2th['p_bat_ref'].values, label = 'p_bat_ref')
-                        plt.plot(time_steps, self.results_2th['k_pv_ref'].values, label = 'k_pv_ref')
-                        plt.plot(time_steps, self.results_2th['p_sc_ref'].values, label = 'p_sc_ref')
-                        plt.plot(time_steps, self.pv_forecasted_2th['data'].values, label = 'pv_forecasted_2th')
-                        plt.plot(time_steps, self.load_forecasted_2th['data'].values, label = 'load_forecasted_2th')
-                        plt.title("Reference")
-                        plt.legend()
-                        plt.grid()
-                        if (self.enable_save_plot):
-                            plt.savefig(f"{self.path_to_plot}results_2th_{self.t}.png")
+                    # if self.enable_plot or self.enable_save_plot:
+                    #     print(f"OF_2th: {self.OF_2th}")
+                    #     plt.figure(figsize=(10, 5))
+                    #     time_steps = list(range(self.Datas.NP_2TH))
+                    #     plt.plot(time_steps, self.results_2th['p_bat_ref'].values, label = 'p_bat_ref')
+                    #     plt.plot(time_steps, self.results_2th['k_pv_ref'].values, label = 'k_pv_ref')
+                    #     plt.plot(time_steps, self.results_2th['p_sc_ref'].values, label = 'p_sc_ref')
+                    #     plt.plot(time_steps, self.pv_forecasted_2th['data'].values, label = 'pv_forecasted_2th')
+                    #     plt.plot(time_steps, self.load_forecasted_2th['data'].values, label = 'load_forecasted_2th')
+                    #     plt.title("Reference")
+                    #     plt.legend()
+                    #     plt.grid()
+                    #     if (self.enable_save_plot):
+                    #         plt.savefig(f"{self.path_to_plot}results_2th_{self.t}.png")
                     
                 # Check if plot
                 if self.enable_plot:
@@ -272,13 +279,30 @@ class EMS():
 
     def run_3th_optimization(self) -> None:
         print("4) run_3th_optimization")
-        self.results_3th, self.OF_3th = self.milp_optimization.optimization_3th(self.Datas,
-                                                                                self.pv_forecasted_3th,
-                                                                                self.load_forecasted_3th,
-                                                                                self.Datas.connected_mode)
-
+        
+        if self.Datas.run_3th_with_market is True:
+            self.results_3th, self.OF_3th = self.milp_optimization.optimization_3th_market(self.Datas,
+                                                                                        self.pv_forecasted_3th,
+                                                                                        self.load_forecasted_3th,
+                                                                                        self.p_grid_cost,
+                                                                                        self.Datas.connected_mode)
+        else:
+            self.results_3th, self.OF_3th = self.milp_optimization.optimization_3th(self.Datas,
+                                                                                    self.pv_forecasted_3th,
+                                                                                    self.load_forecasted_3th,
+                                                                                    self.Datas.connected_mode)
+        
         # Save 3th results
-        self.results_3th.to_csv(f"Results_compilation/results_3th_{self.t}.csv")
+        try:
+            self.results_3th.to_csv(f"Results_compilation/results_3th_{self.t}.csv")
+        except:
+            print("\n\n")
+            traceback.print_exc()
+            input_key = int(input("Fechar o CSV do 3th! Pressione 1 para continuar."))
+            if input_key == 1:
+                self.results_3th.to_csv(f"Results_compilation/results_3th_{self.t}.csv")
+            else:
+                pass
 
 
     def run_2th_optimization(self) -> None:
@@ -532,11 +556,11 @@ class EMS():
         
         if (self.Datas.connected_mode):
             print("Plot p_grid")
-            plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_grid_3th'], marker='o', linestyle='-', color='r', label='Grid')
+            plt.plot(time_steps, self.results_3th.loc[:, 'p_grid_sch'], linestyle='-', color='r', label='Grid')
         
-        plt.plot(time_steps, self.Datas.R_3th.loc[:, 'p_bat_3th'], marker='o', linestyle='-', color='b', label='Battery')
-        plt.plot(time_steps, self.pv_forecasted_3th.loc[:, 'pv_forecasted_3th'], marker='o', linestyle='-', color='orange', label='PV')
-        plt.plot(time_steps, self.load_forecasted_3th.loc[:, 'load_forecasted_3th'], marker='o', linestyle='-', color='g', label='Load')
+        plt.plot(time_steps, self.results_3th.loc[:, 'p_bat_sch'], linestyle='-', color='b', label='Battery')
+        plt.plot(time_steps, self.results_3th.loc[:, 'pv_forecasted'], linestyle='-', color='orange', label='PV')
+        plt.plot(time_steps, self.results_3th.loc[:, 'load_forecasted'], linestyle='-', color='g', label='Load')
         plt.axhline(0, color='black', linestyle='--')
         plt.xlabel('Time (h)')
         plt.ylabel('Power (kW)')
@@ -544,11 +568,16 @@ class EMS():
         plt.legend()
         plt.grid()
 
-        plt.figure(figsize=(10, 5))
         if (self.Datas.connected_mode):
-            plt.plot(time_steps, self.Datas.R_3th.loc[:, 'k_pv_3th'], marker='o', linestyle='-', color='r', label='k_pv_3th')
+            plt.figure(figsize=(10, 5))
+            plt.plot(time_steps, self.results_3th.loc[:, 'p_grid_cost'], linestyle='-', color='y', label='p_grid_cost')
         
-        plt.plot(time_steps, self.Datas.R_3th.loc[:, 'soc_bat_3th'], marker='o', linestyle='-', color='b', label='soc_bat')
+        plt.figure(figsize=(10, 5))
+        plt.plot(time_steps, self.results_3th.loc[:, 'k_pv_sch'], linestyle='-', color='r', label='k_pv_3th')
+        
+        plt.figure(figsize=(10, 5))
+        plt.plot(time_steps, self.results_3th.loc[:, 'soc_bat'], linestyle='-', color='b', label='soc_bat')
+        
         plt.axhline(0, color='black', linestyle='--')
         plt.xlabel('Hora')
         plt.ylabel('SOC (%)')
@@ -556,7 +585,6 @@ class EMS():
         plt.legend()
         plt.grid()
         plt.show()
-        print("Custo Total:", self.Datas.R_3th.loc[0, 'FO'])
         
         
         
@@ -566,6 +594,8 @@ if __name__ == "__main__":
     EMS_instance = EMS()
     
     datas, t, medium_time_2th_optimization = EMS_instance.run()
+    EMS_instance.plot_result()
+    
     print(type(datas))
 
     print(f"datas.M.loc[{0}, 'soc_bat']: {datas.M.loc[0, 'soc_bat']}")

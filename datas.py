@@ -14,24 +14,22 @@ class Datas:
     def __init__(self):
         
         """
-        Teste 1 - Primerio, que testei para o ilhado
-        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias.csv"
+        Teste - Primerio, que testei para o ilhado
+        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_1_dia_meu_caso_de_uso.csv"
         self.path_past_pv = "data_pv_15_min_past.csv"
         self.path_past_load = "data_load_15_min_past.csv"
-            
-        Teste 2 - Sem carga para ver exportação para a grid
-        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias_sem_carga.csv"
-        self.path_past_pv = "data_pv_15_min_past.csv"
-        self.path_past_load = "data_load_15_min_past_sem_carga.csv"
-            
-        Teste 3 - Iniciando com PV
-        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias.csv"
+        self.path_grid_cost = "data_grid_cost.csv"
+                       
+        Teste - Iniciando com PV
+        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_1_dia_meu_caso_de_uso.csv"
         self.path_past_pv = "data_pv_15_min_past_t_init_25200.csv"
         self.path_past_load = "data_load_15_min_past_t_init_25200.csv"
+        self.path_grid_cost = "data_grid_cost_25200.csv"
         """
-        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_3_dias.csv"
-        self.path_past_pv = "data_pv_15_min_past_t_init_25200.csv"
-        self.path_past_load = "data_load_15_min_past_t_init_25200.csv"
+        self.caminho_do_arquivo = "datas_1_s_completo_SNPTEE_1_dia_meu_caso_de_uso.csv"
+        self.path_past_pv = "data_pv_15_min_past.csv"
+        self.path_past_load = "data_load_15_min_past.csv"
+        self.path_grid_cost = "data_grid_cost.csv"
         
         
         """ TIMERS DE INICIO E FIM
@@ -47,8 +45,15 @@ class Datas:
             self.t_final = 3000
         """
         # Timers
-        self.t = 25200
-        self.t_final = 30000
+        self.t = 0
+        self.t_final = 1
+        # 3th mdoe
+        self.run_3th_with_market = True
+        # Operation mode
+        self.connected_mode = False # user need choose this
+        # Optmization method
+        # self.optimization_method = "QP"
+        self.optimization_method = "MILP"
         
         
         
@@ -66,23 +71,17 @@ class Datas:
         self.M['k_pv_ref'] = self.M['k_pv_ref'].astype('float64')
         self.M['power_balance'] = self.M['power_balance'].astype('float64')
 
-        # Operation mode
-        self.connected_mode = True # user need choose this
-        
-        # Optmization method
-        # self.optimization_method = "QP"
-        self.optimization_method = "MILP"
         
         # Time constants
         self.NP_2TH         = 15 # seconds
         self.NP_3TH         = 96 # minutes
         self.TS_2TH         = 1 # seconds
-        self.TS_3TH         = 900 # seconds, 900 s = 15 m
+        self.TS_3TH         = 900 # minutes = 900 s = 0.25 h
         self.TS_MEASUREMENT = 1 # seconds
 
         # Technical specification constants
         # bat
-        self.Q_BAT         = int(120) # kWh
+        self.Q_BAT         = int(12) # kWh
         self.SOC_BAT_MIN   = float(0.2)
         self.SOC_BAT_MAX   = float(0.85)
         self.P_BAT_MAX     = int(10) # kW
@@ -102,6 +101,10 @@ class Datas:
         self.P_GRID_EXP_DESIRED = self.P_GRID_MAX
         self.P_GRID_IMP_DESIRED = 0
         
+        # battery cost
+        self.bat_cos = 100000 # R$
+        self.N_cycles_est = 6000 # Ciclos
+        self.lin_bat_degra_cost_est  = (self.bat_cos/self.Q_BAT)/(2*self.N_cycles_est*(self.SOC_BAT_MAX-self.SOC_BAT_MIN)) # 0.0747 R$/kWh
 
         # Constansts references for optimization
         self.SOC_SC_REF  = 0.5
@@ -109,7 +112,7 @@ class Datas:
         self.K_PV_REF    = 1
            
         # Measurements (Init values)
-        self.soc_bat = 0.8
+        self.soc_bat = 0.5
         self.soc_sc  = 0.5
         self.k_pv    = 1
         self.p_pv    = 0
@@ -139,10 +142,7 @@ class Datas:
         
         self.MB_MULTIPLIER = 1000
         
-        
-        
         ''' ------------------- Matrices for 3th ------------------- '''
-       
         # # Input for optimization
         # self.I_3th = pd.DataFrame({'p_pv': [0.0]*self.NP_3TH,
         #                            'tariff_pur': [0.5]*self.NP_3TH,

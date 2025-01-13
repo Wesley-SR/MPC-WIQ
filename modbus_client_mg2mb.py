@@ -13,14 +13,14 @@ import time
 
 from pyModbusTCP.client import ModbusClient
 import pandas as pd
-from datas import Datas
 
 def calculate_power_balance(conected_mode, p_pv, p_load, soc_bat, soc_sc):
     pass
 
 
-if __name__ == '__main__':
-
+def run_modbus_client_mgs2mb():
+    
+    from datas import Datas
     datas = Datas()
     
     # Faz a leitura do arquivo
@@ -66,20 +66,22 @@ if __name__ == '__main__':
         # Check reset need
         reset = client.read_holding_registers(100, 1)[0]
         if reset == 1:
-            print("\n\n\n\n\n\n")
             print("RESET")
-            print("Lendo tudo de novo")
-            medidas_csv = pd.read_csv(datas.caminho_do_arquivo)
-            counter_mb = 0
-            last_counter_mb = - 1
-            updated_data_switch = 0
-            got_reference_signals = False
+            print("\n\n\n\n\n\n")
+            # print("Lendo tudo de novo")
+            # medidas_csv = pd.read_csv(datas.caminho_do_arquivo)
+            # counter_mb = 0
+            # last_counter_mb = - 1
+            # updated_data_switch = 0
+            # got_reference_signals = False
             client.write_single_register(100,0)
             
-            soc_bat = soc_bat_init
-            soc_sc = soc_sc_init
-            k_pv = k_pv_init
-            p_sc = p_sc_init
+            # soc_bat = soc_bat_init
+            # soc_sc = soc_sc_init
+            # k_pv = k_pv_init
+            # p_sc = p_sc_init
+            client.close()
+            return 0
         
         number_of_register_to_read = 25
         registers = client.read_holding_registers(0, number_of_register_to_read)
@@ -242,3 +244,9 @@ if __name__ == '__main__':
         time.sleep(0.01)
 
     print("Cliente encerrado")
+
+
+if __name__ == '__main__':
+    while(True):
+        print("========= INICIANDO MODBUS CLIENT MG2MB =========")
+        run_modbus_client_mgs2mb()

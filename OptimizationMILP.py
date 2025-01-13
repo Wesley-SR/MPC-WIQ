@@ -9,7 +9,280 @@ from datas import Datas
 from typing import Type
 
 class OptimizationMILP():
+    
+    ''' ------------------------------------------------------------------------------- 
+    isolated Optimization 3th from V2G
+    --------------------------------------------------------------------------------'''
+    @staticmethod
+    def optimization_3th_market(Datas: Datas, pv_forecasted: pd.DataFrame, load_forecasted: pd.DataFrame, p_grid_cost: pd.DataFrame, connected_mode: bool) -> tuple:
+        
+        # print(f"pv_forecasted len: {len(pv_forecasted)}, load_forecasted len: {len(load_forecasted)}, p_grid_costlen: {len(p_grid_cost)} ")
+        # 3TH - 3TH - 3TH - 3TH - 3TH - 3TH - 3TH - 3TH - 3TH - 3TH
+        if connected_mode is True:
+            WEIGHT_REF_K_PV  = 10
+            WEIGHT_VAR_P_BAT = 10
+            MULTIPLIER_J_VAR_BAT = 75
+            WEIGHT_REF_SOC_BAT   = 1
+            WEIGHT_VAR_P_GRID = 0.01
+            WEIGHT_MARKET_P_GRID = 80
+            WEIGHT_DEG_BAT = 1
+        else: 
+            WEIGHT_REF_K_PV   = 100
+            WEIGHT_VAR_P_BAT  = 50
+            MULTIPLIER_J_VAR_BAT = 75
+            WEIGHT_REF_SOC_BAT   = 100
+            WEIGHT_DEG_BAT = 0.001
+        
+        
+        ''' -------------------- Optimization Problem ---------------------------- '''
+        prob   = pl.LpProblem("OptimizationMILP", pl.LpMinimize) # LpMinimize e LpMaximize
+        solver = pl.PULP_CBC_CMD(msg=False, timeLimit=60*1)
+        # Solver Disponívels (gratuitos)
+        # ['PULP_CBC_CMD', 'SCIP_CMD']
 
+
+        ''' ------------------------- VARIÁVEIS DO PROBLEMA ----------------------- '''
+        # Battery power
+        p_bat_dis    = pl.LpVariable.dicts('p_bat_dis',         range(Datas.NP_3TH),lowBound=0, upBound=Datas.P_BAT_MAX,cat='Continuous')
+        p_bat_ch     = pl.LpVariable.dicts('p_bat_ch',          range(Datas.NP_3TH),lowBound=0, upBound=Datas.P_BAT_MAX,cat='Continuous')
+        flag_ch_bat  = pl.LpVariable.dicts('flag_ch_bat',   range(Datas.NP_3TH),cat='Binary')
+        flag_dis_bat = pl.LpVariable.dicts('flag_dis_bat',  range(Datas.NP_3TH),cat='Binary')
+        soc_bat      = pl.LpVariable.dicts('soc_bat',           range(Datas.NP_3TH),lowBound=Datas.SOC_BAT_MIN, upBound=Datas.SOC_BAT_MAX,cat='Continuous')
+        # Battery power variation module
+        # Charg
+        abs_var_p_bat_ch_a      = pl.LpVariable.dicts('abs_var_p_bat_ch_a',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        abs_var_p_bat_ch_b      = pl.LpVariable.dicts('abs_var_p_bat_ch_b',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        flag_abs_var_p_bat_ch_a = pl.LpVariable.dicts('flag_abs_var_p_bat_ch_a', range(Datas.NP_3TH), cat='Binary')
+        flag_abs_var_p_bat_ch_b = pl.LpVariable.dicts('flag_abs_var_p_bat_ch_b', range(Datas.NP_3TH), cat='Binary')
+        # Discharge
+        abs_var_p_bat_dis_a      = pl.LpVariable.dicts('abs_var_p_bat_dis_a',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        abs_var_p_bat_dis_b      = pl.LpVariable.dicts('abs_var_p_bat_dis_b',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_BAT_VAR_MAX, cat='Continuous')
+        flag_abs_var_p_bat_dis_a = pl.LpVariable.dicts('flag_abs_var_p_bat_dis_a', range(Datas.NP_3TH), cat='Binary')
+        flag_abs_var_p_bat_dis_b = pl.LpVariable.dicts('flag_abs_var_p_bat_dis_b', range(Datas.NP_3TH), cat='Binary')
+        # Battery absolute values
+        abs_ref_soc_bat_a      = pl.LpVariable.dicts('abs_ref_soc_bat_a',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.SOC_BAT_MAX-Datas.SOC_BAT_MIN, cat='Continuous')
+        abs_ref_soc_bat_b      = pl.LpVariable.dicts('abs_ref_soc_bat_b',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.SOC_BAT_MAX-Datas.SOC_BAT_MIN, cat='Continuous')
+        flag_abs_ref_soc_bat_a = pl.LpVariable.dicts('flag_abs_ref_soc_bat_a', range(Datas.NP_3TH), cat='Binary')
+        flag_abs_ref_soc_bat_b = pl.LpVariable.dicts('flag_abs_ref_soc_bat_b', range(Datas.NP_3TH), cat='Binary')
+        # Penalidade variacao bateria, Big-M
+        flag_bigM_bat = pl.LpVariable.dicts('flag_d_bat', range(Datas.NP_3TH), cat='Binary')
+        L_k_bat = -1000
+        U_k_bat = 1000
+        Epsolon_bat = 0.0001
+        max_var_bat_bigM = 0.25
+        
+        # Photovoltaic Panel
+        k_pv              = pl.LpVariable.dicts('k_pv',          range(Datas.NP_3TH), lowBound=0, upBound=1, cat='Continuous')
+        abs_ref_k_pv_a      = pl.LpVariable.dicts('abs_ref_k_pv_a',      range(Datas.NP_3TH), lowBound=0, upBound=1, cat='Continuous')
+        abs_ref_k_pv_b      = pl.LpVariable.dicts('abs_ref_k_pv_b',      range(Datas.NP_3TH), lowBound=0, upBound=1, cat='Continuous')
+        flag_abs_ref_k_pv_a = pl.LpVariable.dicts('flag_abs_ref_k_pv_a', range(Datas.NP_3TH), cat='Binary')
+        flag_abs_ref_k_pv_b = pl.LpVariable.dicts('flag_abs_ref_k_pv_b', range(Datas.NP_3TH), cat='Binary')
+        
+        # Main Grid
+        if connected_mode is True:
+            print("********** MODO CONECTADO ************")
+            # p_imp
+            p_grid_imp    = pl.LpVariable.dicts('p_grid_imp',         range(Datas.NP_3TH),lowBound=0, upBound=Datas.P_GRID_MAX,cat='Continuous')
+            flag_p_grid_imp  = pl.LpVariable.dicts('flag_p_grid_imp',   range(Datas.NP_3TH),cat='Binary')
+            # p_exp
+            p_grid_exp    = pl.LpVariable.dicts('p_grid_exp',         range(Datas.NP_3TH),lowBound=0, upBound=Datas.P_GRID_MAX,cat='Continuous')
+            flag_p_grid_exp  = pl.LpVariable.dicts('flag_p_grid_exp',   range(Datas.NP_3TH),cat='Binary')
+            # Import variation
+            abs_var_p_grid_imp_a      = pl.LpVariable.dicts('abs_var_p_grid_imp_a',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_GRID_VAR_MAX, cat='Continuous')
+            abs_var_p_grid_imp_b      = pl.LpVariable.dicts('abs_var_p_grid_imp_b',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_GRID_VAR_MAX, cat='Continuous')
+            flag_abs_var_p_grid_imp_a = pl.LpVariable.dicts('flag_abs_var_p_grid_imp_a', range(Datas.NP_3TH), cat='Binary')
+            flag_abs_var_p_grid_imp_b = pl.LpVariable.dicts('flag_abs_var_p_grid_imp_b', range(Datas.NP_3TH), cat='Binary')
+            # Export variation
+            abs_var_p_grid_exp_a      = pl.LpVariable.dicts('abs_var_p_grid_exp_a',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_GRID_VAR_MAX, cat='Continuous')
+            abs_var_p_grid_exp_b      = pl.LpVariable.dicts('abs_var_p_grid_exp_b',      range(Datas.NP_3TH), lowBound=0, upBound=Datas.P_GRID_VAR_MAX, cat='Continuous')
+            flag_abs_var_p_grid_exp_a = pl.LpVariable.dicts('flag_abs_var_p_grid_exp_a', range(Datas.NP_3TH), cat='Binary')
+            flag_abs_var_p_grid_exp_b = pl.LpVariable.dicts('flag_abs_var_p_grid_exp_b', range(Datas.NP_3TH), cat='Binary')
+        
+        
+        ''' ------------------------- FUNÇÃO OBJETIVO ------------------------------'''
+        J_k_pv_ref = pl.LpVariable('J_k_pv_ref', lowBound=(0), upBound=(1000))
+        J_bat_var_ch = pl.LpVariable('J_bat_var_ch', lowBound=(0), upBound=(1000))
+        J_bat_var_dis = pl.LpVariable('J_bat_var_dis', lowBound=(0), upBound=(1000))
+        J_bat_ref_soc = pl.LpVariable('J_bat_ref_soc', lowBound=(0), upBound=(1000))
+        J_bat_deg = pl.LpVariable('J_bat_deg', lowBound=(0), upBound=(1000))
+        if connected_mode is True:
+            J_grid_exp_market = pl.LpVariable('J_grid_exp_market', lowBound=(0), upBound=(1000))
+            J_grid_imp_market = pl.LpVariable('J_grid_imp_market', lowBound=(0), upBound=(1000))
+            J_grid_var_exp = pl.LpVariable('J_grid_var_exp', lowBound=(0), upBound=(1000))
+            J_grid_var_imp = pl.LpVariable('J_grid_var_imp', lowBound=(0), upBound=(1000))
+        
+        # Objective Function
+        if connected_mode is True:
+            objective_function = ( (WEIGHT_REF_K_PV     * J_k_pv_ref)
+                                + (WEIGHT_VAR_P_BAT     * (J_bat_var_ch + J_bat_var_dis))
+                                + (WEIGHT_REF_SOC_BAT   * J_bat_ref_soc)
+                                + (WEIGHT_VAR_P_GRID    * (J_grid_var_exp + J_grid_var_imp))
+                                + (WEIGHT_MARKET_P_GRID * (- J_grid_exp_market + J_grid_imp_market))
+                                + (WEIGHT_DEG_BAT * J_bat_deg)
+                                )
+        else:
+            # TODO: Dividir pelo máximo da parcela (Deve passar por normalização)
+            objective_function = ( (WEIGHT_REF_K_PV * J_k_pv_ref)
+                                + (WEIGHT_VAR_P_BAT * (J_bat_var_ch + J_bat_var_dis))
+                                + (WEIGHT_REF_SOC_BAT   * J_bat_ref_soc / 1)
+                                + (WEIGHT_DEG_BAT * J_bat_deg)
+                                )
+            
+        prob.setObjective(objective_function)
+        
+        
+        
+        ''' --------------------------- RESTRIÇÕES -------------------------------- '''
+        
+        ''' Build objectives '''
+        # Specific Objects
+        prob += J_k_pv_ref == pl.lpSum([(abs_ref_k_pv_a[k] + abs_ref_k_pv_b[k]) for k in range(Datas.NP_3TH)])
+        prob += J_bat_var_ch == pl.lpSum([(abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k] + flag_bigM_bat[k]*MULTIPLIER_J_VAR_BAT) for k in range(Datas.NP_3TH)])
+        prob += J_bat_var_dis == pl.lpSum([(abs_var_p_bat_dis_a[k] + abs_var_p_bat_dis_b[k] + flag_bigM_bat[k]*MULTIPLIER_J_VAR_BAT) for k in range(Datas.NP_3TH)])
+        prob += J_bat_ref_soc == pl.lpSum([(abs_ref_soc_bat_a[k] + abs_ref_soc_bat_b[k]) for k in range(Datas.NP_3TH)])
+        prob += J_bat_deg == pl.lpSum([(Datas.lin_bat_degra_cost_est * (p_bat_ch[k]+p_bat_dis[k]) * (Datas.TS_3TH/60/60)) for k in range(Datas.NP_3TH)])
+        if connected_mode is True:
+            # Grid ref
+            prob += J_grid_exp_market == pl.lpSum([(p_grid_exp[k] * p_grid_cost.loc[k, 'data']) for k in range(Datas.NP_3TH)])
+            prob += J_grid_imp_market == pl.lpSum([(p_grid_imp[k] * p_grid_cost.loc[k, 'data']) for k in range(Datas.NP_3TH)])
+            # Grid var
+            prob += J_grid_var_exp == pl.lpSum([(abs_var_p_grid_exp_a[k] + abs_var_p_grid_exp_b[k]) for k in range(Datas.NP_3TH)])
+            prob += J_grid_var_imp == pl.lpSum([(abs_var_p_grid_imp_a[k] + abs_var_p_grid_imp_b[k]) for k in range(Datas.NP_3TH)])
+        
+        '''
+            No código, k = 0, é o mesmo que X(t+k|t) para k = 1, do texto.
+            
+            k=0 é o atual
+        '''  
+        for k in range(0, Datas.NP_3TH):
+            # ------------ Operational Constraints ------------
+            # BATTERY
+            # P_bat
+            prob += p_bat_ch[k]  <= flag_ch_bat[k] * Datas.P_BAT_MAX
+            prob += p_bat_dis[k] <= flag_dis_bat[k] * Datas.P_BAT_MAX
+            prob += flag_ch_bat[k] + flag_dis_bat[k] <= 1 # simultaneity      
+            # Absolute value for battery power variation
+            if k == 0:
+                if Datas.p_bat >= 0:
+                   prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == p_bat_ch[k] - 0
+                   prob += abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k] == p_bat_dis[k] - Datas.p_bat
+                else:
+                   prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == p_bat_ch[k] - (-Datas.p_bat)
+                   prob += abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k] == p_bat_dis[k] - 0
+            else:
+                prob += abs_var_p_bat_ch_a[k] - abs_var_p_bat_ch_b[k] == p_bat_ch[k] - p_bat_ch[k-1]
+                prob += abs_var_p_bat_dis_a[k] - abs_var_p_bat_dis_b[k] == p_bat_dis[k] - p_bat_dis[k-1]
+            prob += abs_var_p_bat_ch_a[k] <= flag_abs_var_p_bat_ch_a[k] * Datas.P_BAT_VAR_MAX
+            prob += abs_var_p_bat_ch_b[k] <= flag_abs_var_p_bat_ch_b[k] * Datas.P_BAT_VAR_MAX
+            prob += flag_abs_var_p_bat_ch_a[k] + flag_abs_var_p_bat_ch_b[k] <= 1 # simultaneity
+            prob += abs_var_p_bat_dis_a[k] <= flag_abs_var_p_bat_dis_a[k] * Datas.P_BAT_VAR_MAX
+            prob += abs_var_p_bat_dis_b[k] <= flag_abs_var_p_bat_dis_b[k] * Datas.P_BAT_VAR_MAX
+            prob += flag_abs_var_p_bat_dis_a[k] + flag_abs_var_p_bat_dis_b[k] <= 1 # simultaneity
+            # Battery SOC
+            if k == 0:
+                prob += soc_bat[k] == Datas.soc_bat
+            else:
+                prob += soc_bat[k] == soc_bat[k-1] - (p_bat_dis[k-1] - p_bat_ch[k-1])*(Datas.TS_3TH/60/60)/Datas.Q_BAT
+            # flag_bigM_bat   L_k_bat     U_k_bat    Epsolon_bat    max_var_bat_bigM
+            prob += (abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k] + abs_var_p_bat_dis_a[k] + abs_var_p_bat_dis_b[k]) - max_var_bat_bigM >= L_k_bat * (1 - flag_bigM_bat[k])
+            prob += (abs_var_p_bat_ch_a[k] + abs_var_p_bat_ch_b[k] + abs_var_p_bat_dis_a[k] + abs_var_p_bat_dis_b[k]) - max_var_bat_bigM <= (U_k_bat + Epsolon_bat)*flag_bigM_bat[k] - Epsolon_bat
+                
+            # Absolute value between SOC and SOC_ref
+            prob += abs_ref_soc_bat_a[k] - abs_ref_soc_bat_b[k] == soc_bat[k] - Datas.SOC_BAT_REF
+            prob += abs_ref_soc_bat_a[k] <= flag_abs_ref_soc_bat_a[k]
+            prob += abs_ref_soc_bat_b[k] <= flag_abs_ref_soc_bat_b[k]
+            prob += flag_abs_ref_soc_bat_a[k] + flag_abs_ref_soc_bat_b[k] <= 1 # simultaneity
+
+            # k_pv
+            # Absolute value between k_pv and K_PV_REF
+            prob += abs_ref_k_pv_a[k] - abs_ref_k_pv_b[k] == k_pv[k] - Datas.K_PV_REF
+            prob += abs_ref_k_pv_a[k] <= flag_abs_ref_k_pv_a[k]
+            prob += abs_ref_k_pv_b[k] <= flag_abs_ref_k_pv_b[k]
+            prob += flag_abs_ref_k_pv_a[k] + flag_abs_ref_k_pv_b[k] <= 1 # simultaneity
+            
+            # Main Grid
+            if connected_mode is True:
+                # p_grid
+                prob += p_grid_imp[k] <= flag_p_grid_imp[k] * Datas.P_GRID_MAX
+                prob += p_grid_exp[k] <= flag_p_grid_exp[k] * Datas.P_GRID_MAX
+                prob += flag_p_grid_imp[k] + flag_p_grid_exp[k] <= 1 # simultaneity
+                # Absolute value for p_grid var
+                # Export
+                prob += abs_var_p_grid_exp_a[k] <= flag_abs_var_p_grid_exp_a[k] * Datas.P_GRID_MAX
+                prob += abs_var_p_grid_exp_b[k] <= flag_abs_var_p_grid_exp_b[k] * Datas.P_GRID_MAX
+                prob += flag_abs_var_p_grid_exp_a[k] + flag_abs_var_p_grid_exp_b[k] <= 1 # simultaneity
+                # Import
+                prob += abs_var_p_grid_imp_a[k] <= flag_abs_var_p_grid_imp_a[k] * Datas.P_GRID_MAX
+                prob += abs_var_p_grid_imp_b[k] <= flag_abs_var_p_grid_imp_b[k] * Datas.P_GRID_MAX
+                prob += flag_abs_var_p_grid_imp_a[k] + flag_abs_var_p_grid_imp_b[k] <= 1 # simultaneity
+            
+            
+            
+            # BALANÇO DE POTÊNCIA NO BARRAMENTO DC
+            if connected_mode is True:
+                prob += (
+                        + k_pv[k]*pv_forecasted.loc[k, 'data'] +
+                        + p_bat_dis[k]
+                        + p_grid_imp[k]
+                        ==
+                        + load_forecasted.loc[k, 'data'] +
+                        + p_bat_ch[k]
+                        + p_grid_exp[k]
+                        )
+            else:
+                prob += (
+                        + k_pv[k]*pv_forecasted.loc[k, 'data'] +
+                        + p_bat_dis[k]
+                        ==
+                        + load_forecasted.loc[k, 'data'] +
+                        + p_bat_ch[k]
+                        )
+        
+        
+        ''' ------------------------------------------------------------------------------- 
+        EXECUTA O ALGORITMO DE OTIMIZAÇÃO
+        --------------------------------------------------------------------------------'''
+        print("EXECUTAR SOLVER")
+        solution  = prob.solve(solver)
+        fo_status = pl.LpStatus[solution]
+        fo_value = pl.value(prob.objective)
+        print("Status: {}".format(fo_status))
+        print("Valor da FO: {}".format(fo_value))
+        
+        if not pl.LpStatus[solution] == 'Optimal':
+            raise("[isolated_optimization_3th] Infactivel optimization problem")
+        
+        
+        
+        ''' ------------------------------------------------------------------------------- 
+        SALVA OS DADOS DA OTIMIZAÇÃO
+        --------------------------------------------------------------------------------'''
+        # for k in range(0, Datas.NP_3TH):
+        #     Datas.R_3th.loc[k , 'p_bat_sch']  = p_bat_dis[k].varValue - p_bat_ch[k].varValue
+        #     Datas.R_3th.loc[k , 'k_pv_sch']   = k_pv[k].varvalue
+        results_3th = None
+        fo_value = None
+        if pl.LpStatus[solution] == 'Optimal':
+            print("OTIMO")
+            # Results
+            results_3th = pd.DataFrame(index=range(Datas.NP_3TH), columns=['p_bat_sch', 'k_pv_sch', 'p_grid_sch', 'soc_bat'])
+            for k in range(0, Datas.NP_3TH):
+                results_3th.loc[k, 'p_bat_sch']   = p_bat_dis[k].varValue - p_bat_ch[k].varValue
+                results_3th.loc[k, 'k_pv_sch']    = k_pv[k].varValue
+                if connected_mode is True:
+                    results_3th.loc[k, 'p_grid_sch']  = p_grid_imp[k].varValue - p_grid_exp[k].varValue
+                else:
+                    results_3th.loc[k, 'p_grid_sch']  = 0
+                results_3th.loc[k, 'soc_bat']    = soc_bat[k].varValue
+                results_3th.loc[k, 'pv_forecasted'] = pv_forecasted.loc[k, 'data']
+                results_3th.loc[k, 'load_forecasted'] = load_forecasted.loc[k, 'data']
+                results_3th.loc[k, 'p_grid_cost'] = p_grid_cost.loc[k, 'data']
+        else:
+            print("ENGASGOU")
+
+        return results_3th, fo_value
+    
+    
     ''' ------------------------------------------------------------------------------- 
     isolated Optimization 3th
     --------------------------------------------------------------------------------'''
@@ -24,7 +297,7 @@ class OptimizationMILP():
             MULTIPLIER_J_VAR_BAT = 75
             WEIGHT_REF_SOC_BAT   = 1
             WEIGHT_VAR_P_GRID = 0.01
-            WEIGHT_REF_P_GRID = 1.5
+            WEIGHT_REF_P_GRID = 1
         else: 
             WEIGHT_REF_K_PV   = 1
             WEIGHT_VAR_P_BAT  = 1
@@ -361,7 +634,7 @@ class OptimizationMILP():
         L_k_bat = -1000
         U_k_bat = 1000
         Epsolon_bat = 0.0001
-        max_var_bat_bigM = 0.25
+        max_var_bat_bigM = 0.5
 
         # SUPERCAPACITOR
         # supercapacitor power

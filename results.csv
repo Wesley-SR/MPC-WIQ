@@ -1,2 +1,0 @@
-,index,time,counter_mb,new_mb_data,operation_mode,p_pv,p_load,p_grid,p_bat,p_sc,soc_bat,soc_sc,p_bat_ref,p_sc_ref,p_grid_ref,k_pv_ref,power_balance
-0,0,1/1/2024 0:00,0,0,0,0.0,-2.33701982,0.0,2.337,0.0,0.8,0.5,2.337,0.0,0.0,1.0,0.0
